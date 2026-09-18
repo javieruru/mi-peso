@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="theme-color" content="#F2F2F7">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Mi Peso">
+<title>Mi Peso</title>
+<style>
+  :root{
+    --bg:#F2F2F7;
+    --surface:#FFFFFF;
+    --text:#1C1C1E;
+    --text-2:#6C6C70;
+    --border:rgba(60,60,67,0.12);
+    --accent:#5E5CE6;
+    --accent-ink:#FFFFFF;
+    --ok:#30B355;
+    --warn:#FF9F0A;
+    --danger:#FF3B30;
+    --info:#0A84FF;
+    --shadow:0 1px 2px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.06);
+    --radius:18px;
+    --radius-sm:12px;
+    font-size:16px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#000000;
+      --surface:#1C1C1E;
+      --text:#F2F2F7;
+      --text-2:#98989D;
+      --border:rgba(255,255,255,0.10);
+      --shadow:0 1px 2px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.4);
+    }
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:-apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing:antialiased;
+    overscroll-behavior-y:none;
+  }
+  #app-shell{
+    max-width:480px;
+    margin:0 auto;
+    min-height:100dvh;
+    display:flex;
+    flex-direction:column;
+    position:relative;
+  }
+
+  /* ---------- Auth screen ---------- */
+  #auth-screen{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:28px;
+    padding:32px;
+    text-align:center;
+  }
+  #auth-screen .mark{
+    width:72px;height:72px;border-radius:20px;
+    background:linear-gradient(160deg, var(--accent), #8B5CF6);
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:var(--shadow);
+  }
+  #auth-screen .mark svg{width:36px;height:36px;stroke:#fff;}
+  #auth-screen h1{font-size:22px;margin:0;letter-spacing:-0.01em;}
+  #auth-screen p{color:var(--text-2);font-size:15px;margin:0;max-width:280px;line-height:1.4;}
+  .btn-google{
+    display:flex;align-items:center;gap:10px;
+    background:var(--surface);
+    color:var(--text);
+    border:1px solid var(--border);
+    padding:13px 22px;
+    border-radius:999px;
+    font-size:15px;font-weight:600;
+    box-shadow:var(--shadow);
+    cursor:pointer;
+  }
+  .btn-google:active{transform:scale(0.97);}
+
+  /* ---------- App layout ---------- */
+  #app{flex:1;display:flex;flex-direction:column;min-height:100dvh;}
+  header.topbar{
+    padding:calc(env(safe-area-inset-top) + 14px) 20px 12px;
+    display:flex;align-items:baseline;justify-content:space-between;
+  }
+  header.topbar h1{font-size:28px;margin:0;letter-spacing:-0.02em;font-weight:700;}
+  header.topbar .sub{font-size:13px;color:var(--text-2);}
+  main{flex:1;overflow-y:auto;padding:4px 16px 100px;}
+  .view{display:none;animation:fade .18s ease;}
+  .view.active{display:block;}
+  @keyframes fade{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:none;}}
+
+  .card{
+    background:var(--surface);
+    border-radius:var(--radius);
+    padding:20px;
+    box-shadow:var(--shadow);
+    margin-bottom:14px;
+  }
+  .card h2{font-size:13px;text-transform:none;color:var(--text-2);margin:0 0 12px;font-weight:600;}
+
+  /* Hoy view */
+  .weight-input-row{display:flex;align-items:center;gap:12px;}
+  .weight-input-row input[type=number]{
+    flex:1;
+    font-size:34px;font-weight:700;
+    border:none;background:transparent;color:var(--text);
+    width:100%;
+    -moz-appearance:textfield;
+  }
+  .weight-input-row input::-webkit-outer-spin-button,
+  .weight-input-row input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+  .weight-input-row .unit{font-size:17px;color:var(--text-2);font-weight:500;}
+  .btn-save{
+    margin-top:14px;width:100%;
+    background:var(--accent);color:var(--accent-ink);
+    border:none;padding:14px;border-radius:var(--radius-sm);
+    font-size:16px;font-weight:600;cursor:pointer;
+  }
+  .btn-save:active{opacity:.85;}
+  .btn-save:disabled{opacity:.45;}
+
+  .imc-row{display:flex;align-items:center;justify-content:space-between;}
+  .imc-value{font-size:40px;font-weight:700;letter-spacing:-0.02em;}
+  .imc-badge{
+    padding:6px 12px;border-radius:999px;font-size:13px;font-weight:600;
+  }
+  .imc-badge.bajo{background:rgba(10,132,255,0.12);color:var(--info);}
+  .imc-badge.normal{background:rgba(48,179,85,0.12);color:var(--ok);}
+  .imc-badge.sobre{background:rgba(255,159,10,0.14);color:var(--warn);}
+  .imc-badge.obesidad{background:rgba(255,59,48,0.12);color:var(--danger);}
+  .imc-empty{color:var(--text-2);font-size:14px;}
+
+  .history-row{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:11px 0;border-bottom:1px solid var(--border);font-size:15px;
+  }
+  .history-row:last-child{border-bottom:none;}
+  .history-row .d{color:var(--text-2);}
+  .history-row .w{font-weight:600;}
+
+  /* Charts */
+  .chart-wrap{position:relative;height:220px;}
+  .stat-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:14px;}
+  .stat-box{text-align:center;}
+  .stat-box .v{font-size:19px;font-weight:700;}
+  .stat-box .l{font-size:11px;color:var(--text-2);margin-top:2px;}
+
+  /* Ajustes */
+  .field-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;}
+  .field-row label{font-size:15px;}
+  .field-row input{
+    text-align:right;font-size:16px;border:none;background:transparent;color:var(--text);
+    width:90px;font-weight:600;
+  }
+  .btn-logout{
+    width:100%;margin-top:8px;background:transparent;color:var(--danger);
+    border:none;padding:14px;font-size:16px;font-weight:600;cursor:pointer;
+    border-radius:var(--radius-sm);
+  }
+  .btn-logout:active{background:rgba(255,59,48,0.08);}
+  .profile-row{display:flex;align-items:center;gap:12px;margin-bottom:6px;}
+  .profile-row img{width:44px;height:44px;border-radius:50%;}
+  .profile-row .name{font-weight:600;font-size:16px;}
+  .profile-row .email{font-size:13px;color:var(--text-2);}
+
+  /* Tab bar */
+  nav.tabbar{
+    position:fixed;left:0;right:0;bottom:0;
+    max-width:480px;margin:0 auto;
+    background:color-mix(in srgb, var(--surface) 85%, transparent);
+    backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+    border-top:1px solid var(--border);
+    display:flex;
+    padding-bottom:env(safe-area-inset-bottom);
+  }
+  nav.tabbar button{
+    flex:1;background:none;border:none;
+    display:flex;flex-direction:column;align-items:center;gap:3px;
+    padding:9px 0 8px;color:var(--text-2);cursor:pointer;
+  }
+  nav.tabbar button svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.8;}
+  nav.tabbar button span{font-size:10px;font-weight:600;}
+  nav.tabbar button.active{color:var(--accent);}
+
+  .hint{font-size:13px;color:var(--text-2);text-align:center;margin-top:10px;}
+  [hidden]{display:none !important;}
+</style>
+</head>
+<body>
+
+<div id="app-shell">
+
+  <!-- ---------- LOGIN ---------- -->
+  <div id="auth-screen">
+    <div class="mark">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a5 5 0 0 1 5 5c0 3-2 5-2 8h-6c0-3-2-5-2-8a5 5 0 0 1 5-5z"/><path d="M9 19h6M10 22h4"/></svg>
+    </div>
+    <div>
+      <h1>Mi Peso</h1>
+      <p>Registrá tu peso diario, seguí tu evolución y tu IMC en el tiempo.</p>
+    </div>
+    <button class="btn-google" id="btn-login">
+      <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92c1.7-1.57 2.68-3.88 2.68-6.62z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.26c-.81.54-1.84.86-3.04.86-2.34 0-4.32-1.58-5.03-3.7H.95v2.33A9 9 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.97 10.72A5.4 5.4 0 0 1 3.68 9c0-.6.1-1.18.29-1.72V4.95H.95A9 9 0 0 0 0 9c0 1.45.35 2.83.95 4.05l3.02-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.51.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0A9 9 0 0 0 .95 4.95l3.02 2.33C4.68 5.16 6.66 3.58 9 3.58z"/></svg>
+      Continuar con Google
+    </button>
+  </div>
+
+  <!-- ---------- APP ---------- -->
+  <div id="app" hidden>
+
+    <header class="topbar">
+      <div>
+        <h1 id="header-title">Hoy</h1>
+        <div class="sub" id="header-date"></div>
+      </div>
+    </header>
+
+    <main>
+
+      <!-- HOY -->
+      <section class="view active" id="view-hoy">
+        <div class="card">
+          <h2>Peso de hoy</h2>
+          <div class="weight-input-row">
+            <input type="number" id="input-peso" inputmode="decimal" step="0.1" placeholder="0.0">
+            <span class="unit">kg</span>
+          </div>
+          <button class="btn-save" id="btn-guardar-peso">Guardar</button>
+          <div class="hint" id="hint-guardado" hidden>Guardado ✓</div>
+        </div>
+
+        <div class="card">
+          <h2>IMC</h2>
+          <div id="imc-block">
+            <div class="imc-empty">Configurá tu altura en Ajustes para calcular tu IMC.</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Últimos registros</h2>
+          <div id="historial-lista"><div class="imc-empty">Todavía no hay registros.</div></div>
+        </div>
+      </section>
+
+      <!-- SEMANA -->
+      <section class="view" id="view-semana">
+        <div class="card">
+          <h2>Últimos 7 días</h2>
+          <div class="chart-wrap"><canvas id="chart-semana"></canvas></div>
+          <div class="stat-grid">
+            <div class="stat-box"><div class="v" id="semana-min">--</div><div class="l">Mínimo</div></div>
+            <div class="stat-box"><div class="v" id="semana-prom">--</div><div class="l">Promedio</div></div>
+            <div class="stat-box"><div class="v" id="semana-max">--</div><div class="l">Máximo</div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- MES -->
+      <section class="view" id="view-mes">
+        <div class="card">
+          <h2>Últimos 30 días</h2>
+          <div class="chart-wrap"><canvas id="chart-mes"></canvas></div>
+          <div class="stat-grid">
+            <div class="stat-box"><div class="v" id="mes-inicio">--</div><div class="l">Inicio del mes</div></div>
+            <div class="stat-box"><div class="v" id="mes-actual">--</div><div class="l">Actual</div></div>
+            <div class="stat-box"><div class="v" id="mes-delta">--</div><div class="l">Variación</div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- AJUSTES -->
+      <section class="view" id="view-ajustes">
+        <div class="card">
+          <div class="profile-row">
+            <img id="perfil-foto" src="" alt="">
+            <div>
+              <div class="name" id="perfil-nombre"></div>
+              <div class="email" id="perfil-email"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Datos personales</h2>
+          <div class="field-row">
+            <label>Altura (cm)</label>
+            <input type="number" id="input-altura" inputmode="decimal" placeholder="170">
+          </div>
+        </div>
+
+        <div class="card">
+          <button class="btn-logout" id="btn-logout">Cerrar sesión</button>
+        </div>
+      </section>
+
+    </main>
+
+    <nav class="tabbar">
+      <button class="tab-btn active" data-view="hoy">
+        <svg viewBox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 0 0 1 1h3m10-11l2 2m-2-2v10a1 1 0 0 1-1 1h-3m-6 0a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1m-4 0h4"/></svg>
+        <span>Hoy</span>
+      </button>
+      <button class="tab-btn" data-view="semana">
+        <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 15l3-4 3 2 5-6"/></svg>
+        <span>Semana</span>
+      </button>
+      <button class="tab-btn" data-view="mes">
+        <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+        <span>Mes</span>
+      </button>
+      <button class="tab-btn" data-view="ajustes">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <span>Ajustes</span>
+      </button>
+    </nav>
+
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+import {
+  getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+import {
+  getFirestore, doc, setDoc, getDoc, collection, getDocs
+} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAYejRsGYKsT-LNsktsSSdrXpSap5Qg6Mg",
+  authDomain: "weight-app-76bfb.firebaseapp.com",
+  projectId: "weight-app-76bfb",
+  storageBucket: "weight-app-76bfb.firebasestorage.app",
+  messagingSenderId: "229773400542",
+  appId: "1:229773400542:web:917aff3285a3728837254f"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const provider = new GoogleAuthProvider();
+
+let currentUser = null;
+let registros = {};      // { "2026-09-18": 78.4, ... }
+let alturaCm = null;
+let chartSemana = null;
+let chartMes = null;
+
+// ---------- Helpers de fecha ----------
+function toDateStr(d){
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const day = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+function addDays(d, n){ const r = new Date(d); r.setDate(r.getDate()+n); return r; }
+const DIAS_CORTOS = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+const MESES = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+
+// ---------- Auth ----------
+document.getElementById('btn-login').addEventListener('click', () => {
+  signInWithPopup(auth, provider).catch(err => alert('No se pudo iniciar sesión: ' + err.message));
+});
+document.getElementById('btn-logout').addEventListener('click', () => {
+  signOut(auth);
+});
+
+onAuthStateChanged(auth, async (user) => {
+  if (user) {
+    currentUser = user;
+    document.getElementById('auth-screen').hidden = true;
+    document.getElementById('app').hidden = false;
+    document.getElementById('perfil-foto').src = user.photoURL || '';
+    document.getElementById('perfil-nombre').textContent = user.displayName || '';
+    document.getElementById('perfil-email').textContent = user.email || '';
+    await cargarPerfil();
+    await cargarRegistros();
+    renderHoy();
+    renderSemana();
+    renderMes();
+  } else {
+    currentUser = null;
+    document.getElementById('auth-screen').hidden = false;
+    document.getElementById('app').hidden = true;
+  }
+});
+
+// ---------- Firestore: perfil (altura) ----------
+async function cargarPerfil(){
+  const ref = doc(db, 'pesos', currentUser.uid, 'config', 'perfil');
+  const snap = await getDoc(ref);
+  if (snap.exists()) {
+    alturaCm = snap.data().alturaCm || null;
+    document.getElementById('input-altura').value = alturaCm || '';
+  }
+}
+document.getElementById('input-altura').addEventListener('change', async (e) => {
+  const val = parseFloat(e.target.value);
+  if (!val || val <= 0) return;
+  alturaCm = val;
+  const ref = doc(db, 'pesos', currentUser.uid, 'config', 'perfil');
+  await setDoc(ref, { alturaCm: val }, { merge: true });
+  renderHoy();
+});
+
+// ---------- Firestore: registros ----------
+async function cargarRegistros(){
+  const ref = collection(db, 'pesos', currentUser.uid, 'registros');
+  const snap = await getDocs(ref);
+  registros = {};
+  snap.forEach(d => { registros[d.id] = d.data().peso; });
+}
+
+document.getElementById('btn-guardar-peso').addEventListener('click', async () => {
+  const val = parseFloat(document.getElementById('input-peso').value);
+  if (!val || val <= 0) { alert('Ingresá un peso válido.'); return; }
+  const fecha = toDateStr(new Date());
+  const ref = doc(db, 'pesos', currentUser.uid, 'registros', fecha);
+  const btn = document.getElementById('btn-guardar-peso');
+  btn.disabled = true;
+  try {
+    await setDoc(ref, { peso: val, fecha }, { merge: true });
+    registros[fecha] = val;
+    const hint = document.getElementById('hint-guardado');
+    hint.hidden = false;
+    setTimeout(() => hint.hidden = true, 1800);
+    renderHoy();
+    renderSemana();
+    renderMes();
+  } catch (err) {
+    alert('No se pudo guardar: ' + err.message);
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+// ---------- IMC ----------
+function calcularIMC(pesoKg, alturaCm){
+  const m = alturaCm / 100;
+  return pesoKg / (m*m);
+}
+function categoriaIMC(imc){
+  if (imc < 18.5) return { label: 'Bajo peso', cls: 'bajo' };
+  if (imc < 25)   return { label: 'Normal', cls: 'normal' };
+  if (imc < 30)   return { label: 'Sobrepeso', cls: 'sobre' };
+  return { label: 'Obesidad', cls: 'obesidad' };
+}
+
+// ---------- Render: Hoy ----------
+function renderHoy(){
+  const hoy = new Date();
+  document.getElementById('header-date').textContent =
+    `${hoy.getDate()} de ${MESES[hoy.getMonth()]}`;
+
+  const fecha = toDateStr(hoy);
+  const pesoHoy = registros[fecha];
+  document.getElementById('input-peso').value = pesoHoy || '';
+
+  const imcBlock = document.getElementById('imc-block');
+  if (pesoHoy && alturaCm) {
+    const imc = calcularIMC(pesoHoy, alturaCm);
+    const cat = categoriaIMC(imc);
+    imcBlock.innerHTML = `
+      <div class="imc-row">
+        <div class="imc-value">${imc.toFixed(1)}</div>
+        <div class="imc-badge ${cat.cls}">${cat.label}</div>
+      </div>`;
+  } else if (!alturaCm) {
+    imcBlock.innerHTML = `<div class="imc-empty">Configurá tu altura en Ajustes para calcular tu IMC.</div>`;
+  } else {
+    imcBlock.innerHTML = `<div class="imc-empty">Registrá tu peso de hoy para ver tu IMC.</div>`;
+  }
+
+  const lista = document.getElementById('historial-lista');
+  const fechas = Object.keys(registros).sort().reverse().slice(0, 7);
+  if (fechas.length === 0) {
+    lista.innerHTML = `<div class="imc-empty">Todavía no hay registros.</div>`;
+  } else {
+    lista.innerHTML = fechas.map(f => {
+      const d = new Date(f + 'T00:00:00');
+      const label = f === fecha ? 'Hoy' : `${DIAS_CORTOS[d.getDay()]} ${d.getDate()}/${d.getMonth()+1}`;
+      return `<div class="history-row"><span class="d">${label}</span><span class="w">${registros[f]} kg</span></div>`;
+    }).join('');
+  }
+}
+
+// ---------- Render: Semana ----------
+function renderSemana(){
+  const hoy = new Date();
+  const labels = [];
+  const data = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = addDays(hoy, -i);
+    labels.push(DIAS_CORTOS[d.getDay()]);
+    data.push(registros[toDateStr(d)] ?? null);
+  }
+  const valores = data.filter(v => v != null);
+  document.getElementById('semana-min').textContent = valores.length ? Math.min(...valores).toFixed(1) : '--';
+  document.getElementById('semana-max').textContent = valores.length ? Math.max(...valores).toFixed(1) : '--';
+  document.getElementById('semana-prom').textContent = valores.length ? (valores.reduce((a,b)=>a+b,0)/valores.length).toFixed(1) : '--';
+
+  chartSemana = pintarChart(chartSemana, 'chart-semana', labels, data);
+}
+
+// ---------- Render: Mes ----------
+function renderMes(){
+  const hoy = new Date();
+  const labels = [];
+  const data = [];
+  for (let i = 29; i >= 0; i--) {
+    const d = addDays(hoy, -i);
+    labels.push(String(d.getDate()));
+    data.push(registros[toDateStr(d)] ?? null);
+  }
+  const valores = data.filter(v => v != null);
+  const inicio = valores.length ? valores[0] : null;
+  const actual = valores.length ? valores[valores.length-1] : null;
+  document.getElementById('mes-inicio').textContent = inicio != null ? inicio.toFixed(1) : '--';
+  document.getElementById('mes-actual').textContent = actual != null ? actual.toFixed(1) : '--';
+  if (inicio != null && actual != null) {
+    const delta = actual - inicio;
+    document.getElementById('mes-delta').textContent = (delta >= 0 ? '+' : '') + delta.toFixed(1);
+  } else {
+    document.getElementById('mes-delta').textContent = '--';
+  }
+
+  chartMes = pintarChart(chartMes, 'chart-mes', labels, data);
+}
+
+function pintarChart(instance, canvasId, labels, data){
+  const ctx = document.getElementById(canvasId).getContext('2d');
+  const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
+  if (instance) instance.destroy();
+  return new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        data,
+        borderColor: accent,
+        backgroundColor: accent + '22',
+        fill: true,
+        tension: 0.35,
+        spanGaps: true,
+        pointRadius: 2,
+        pointBackgroundColor: accent,
+        borderWidth: 2.5
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { grid: { color: 'rgba(128,128,128,0.12)' }, ticks: { color: '#8E8E93', font: { size: 11 } } },
+        x: { grid: { display: false }, ticks: { color: '#8E8E93', font: { size: 11 }, maxRotation: 0 } }
+      }
+    }
+  });
+}
+
+// ---------- Tabs ----------
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    btn.classList.add('active');
+    const view = btn.dataset.view;
+    document.getElementById('view-' + view).classList.add('active');
+    const titles = { hoy: 'Hoy', semana: 'Semana', mes: 'Mes', ajustes: 'Ajustes' };
+    document.getElementById('header-title').textContent = titles[view];
+    document.getElementById('header-date').style.display = view === 'hoy' ? '' : 'none';
+  });
+});
+</script>
+</body>
+</html>
