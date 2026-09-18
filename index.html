@@ -8,6 +8,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Mi Peso">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-192.png">
 <title>Mi Peso</title>
 <style>
   :root{
@@ -28,7 +31,7 @@
     font-size:16px;
   }
   @media (prefers-color-scheme: dark){
-    :root{
+    :root:not([data-theme="light"]):not([data-theme="dark"]){
       --bg:#000000;
       --surface:#1C1C1E;
       --text:#F2F2F7;
@@ -36,6 +39,22 @@
       --border:rgba(255,255,255,0.10);
       --shadow:0 1px 2px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.4);
     }
+  }
+  :root[data-theme="dark"]{
+    --bg:#000000;
+    --surface:#1C1C1E;
+    --text:#F2F2F7;
+    --text-2:#98989D;
+    --border:rgba(255,255,255,0.10);
+    --shadow:0 1px 2px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.4);
+  }
+  :root[data-theme="light"]{
+    --bg:#F2F2F7;
+    --surface:#FFFFFF;
+    --text:#1C1C1E;
+    --text-2:#6C6C70;
+    --border:rgba(60,60,67,0.12);
+    --shadow:0 1px 2px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.06);
   }
   *{box-sizing:border-box;}
   html,body{height:100%;}
@@ -56,8 +75,8 @@
     position:relative;
   }
 
-  /* ---------- Auth screen ---------- */
-  #auth-screen{
+  /* ---------- Auth / Loading screen ---------- */
+  #auth-screen, #loading-screen{
     flex:1;
     display:flex;
     flex-direction:column;
@@ -67,13 +86,13 @@
     padding:32px;
     text-align:center;
   }
-  #auth-screen .mark{
+  #auth-screen .mark, #loading-screen .mark{
     width:72px;height:72px;border-radius:20px;
     background:linear-gradient(160deg, var(--accent), #8B5CF6);
     display:flex;align-items:center;justify-content:center;
     box-shadow:var(--shadow);
   }
-  #auth-screen .mark svg{width:36px;height:36px;stroke:#fff;}
+  #auth-screen .mark svg, #loading-screen .mark svg{width:36px;height:36px;stroke:#fff;}
   #auth-screen h1{font-size:22px;margin:0;letter-spacing:-0.01em;}
   #auth-screen p{color:var(--text-2);font-size:15px;margin:0;max-width:280px;line-height:1.4;}
   .btn-google{
@@ -88,6 +107,12 @@
     cursor:pointer;
   }
   .btn-google:active{transform:scale(0.97);}
+  .spinner{
+    width:22px;height:22px;border-radius:50%;
+    border:3px solid rgba(120,120,128,0.25);border-top-color:var(--accent);
+    animation:spin .8s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
 
   /* ---------- Welcome overlay ---------- */
   #welcome-overlay{
@@ -98,8 +123,9 @@
     transition:opacity .6s ease, backdrop-filter .6s ease;
     opacity:1;
   }
+  :root[data-theme="dark"] #welcome-overlay{ background:rgba(0,0,0,0.45); }
   @media (prefers-color-scheme: dark){
-    #welcome-overlay{ background:rgba(0,0,0,0.45); }
+    :root:not([data-theme="light"]):not([data-theme="dark"]) #welcome-overlay{ background:rgba(0,0,0,0.45); }
   }
   #welcome-overlay.hide{ opacity:0; backdrop-filter:blur(0px); -webkit-backdrop-filter:blur(0px); pointer-events:none; }
   #welcome-text{
@@ -141,6 +167,16 @@
     border-radius:8px;font-size:13px;font-weight:600;color:var(--text-2);cursor:pointer;
   }
   .seg-btn.active{background:var(--surface);color:var(--text);box-shadow:var(--shadow);}
+  .segmented.compact{margin:0 0 16px;}
+
+  /* Range chips */
+  .range-chips{display:flex;gap:8px;overflow-x:auto;margin-bottom:14px;-webkit-overflow-scrolling:touch;padding-bottom:2px;}
+  .range-chips::-webkit-scrollbar{display:none;}
+  .chip{
+    flex:0 0 auto;padding:8px 14px;border-radius:999px;border:1px solid var(--border);
+    background:transparent;color:var(--text-2);font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;
+  }
+  .chip.active{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);}
 
   /* Dashboard */
   .dash-main{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:6px;}
@@ -163,9 +199,15 @@
   .field-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);}
   .field-row:last-of-type{border-bottom:none;}
   .field-row label{font-size:15px;color:var(--text-2);}
-  .field-row input{
+  .field-row input, .field-row select{
     text-align:right;font-size:16px;border:none;background:transparent;color:var(--text);
     width:150px;font-weight:600;font-family:inherit;
+  }
+  .field-row.stack{flex-direction:column;align-items:stretch;gap:6px;}
+  .field-row.stack label{font-size:13px;}
+  .field-row.stack textarea{
+    border:none;background:rgba(120,120,128,0.08);border-radius:var(--radius-sm);
+    padding:10px;font-size:14px;color:var(--text);font-family:inherit;resize:none;width:100%;min-height:44px;
   }
   .btn-save{
     margin-top:14px;width:100%;
@@ -177,22 +219,21 @@
   .btn-save:disabled{opacity:.45;}
   .btn-save.small{padding:10px;font-size:14px;flex:1;}
 
-  .imc-row{display:flex;align-items:center;justify-content:space-between;}
-  .imc-value{font-size:40px;font-weight:700;letter-spacing:-0.02em;}
   .imc-badge{padding:6px 12px;border-radius:999px;font-size:13px;font-weight:600;}
   .imc-badge.bajo{background:rgba(10,132,255,0.12);color:var(--info);}
   .imc-badge.normal{background:rgba(48,179,85,0.12);color:var(--ok);}
   .imc-badge.sobre{background:rgba(255,159,10,0.14);color:var(--warn);}
   .imc-badge.obesidad{background:rgba(255,59,48,0.12);color:var(--danger);}
-  .imc-empty{color:var(--text-2);font-size:14px;}
 
   .history-row{
-    display:flex;justify-content:space-between;align-items:center;
+    display:flex;flex-direction:column;gap:2px;
     padding:11px 0;border-bottom:1px solid var(--border);font-size:15px;
   }
   .history-row:last-child{border-bottom:none;}
+  .history-row .row1{display:flex;justify-content:space-between;align-items:center;}
   .history-row .d{color:var(--text-2);}
   .history-row .w{font-weight:600;}
+  .history-row .nota{font-size:12px;color:var(--text-2);font-style:italic;}
 
   /* Charts */
   .chart-wrap{position:relative;height:220px;}
@@ -213,11 +254,13 @@
   /* Historial completo */
   .hist-row-wrap{border-bottom:1px solid var(--border);}
   .hist-row-wrap:last-child{border-bottom:none;}
-  .hist-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;cursor:pointer;}
-  .hist-fecha{font-size:14px;color:var(--text-2);width:80px;flex-shrink:0;}
-  .hist-datos{flex:1;font-size:15px;font-weight:600;text-align:right;padding-right:10px;}
+  .hist-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;cursor:pointer;gap:8px;}
+  .hist-fecha{font-size:14px;color:var(--text-2);width:76px;flex-shrink:0;}
+  .hist-datos{flex:1;text-align:right;padding-right:6px;}
+  .hist-datos .principal{font-size:15px;font-weight:600;}
+  .hist-datos .nota{display:block;font-size:12px;color:var(--text-2);font-style:italic;}
   .hist-cintura{font-weight:500;color:var(--text-2);}
-  .hist-edit-btn{background:none;border:none;color:var(--accent);font-size:16px;cursor:pointer;padding:4px 6px;}
+  .hist-edit-btn{background:none;border:none;color:var(--accent);font-size:16px;cursor:pointer;padding:4px 6px;flex-shrink:0;}
   .hist-edit-panel{padding:6px 0 14px;}
   .hist-edit-panel .field-row input{width:120px;}
   .hist-edit-actions{display:flex;gap:10px;margin-top:10px;}
@@ -282,6 +325,14 @@
     <div id="debug-msg" style="font-size:12px;color:var(--text-2);max-width:300px;word-break:break-word;"></div>
   </div>
 
+  <!-- ---------- LOADING ---------- -->
+  <div id="loading-screen" hidden>
+    <div class="mark">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a5 5 0 0 1 5 5c0 3-2 5-2 8h-6c0-3-2-5-2-8a5 5 0 0 1 5-5z"/><path d="M9 19h6M10 22h4"/></svg>
+    </div>
+    <div class="spinner"></div>
+  </div>
+
   <!-- ---------- WELCOME OVERLAY ---------- -->
   <div id="welcome-overlay" hidden>
     <div id="welcome-text">Hola</div>
@@ -304,7 +355,7 @@
 
         <div class="card" id="dashboard-card">
           <h2>Resumen</h2>
-          <div id="dashboard-body"><div class="empty-state">Registrá tu primer peso para ver tu resumen.</div></div>
+          <div id="dashboard-body"></div>
         </div>
 
         <div class="card">
@@ -321,44 +372,47 @@
             <label>Cintura (cm)</label>
             <input type="number" id="input-cintura" inputmode="decimal" step="0.1" placeholder="Opcional">
           </div>
+          <div class="field-row stack">
+            <label>Nota (opcional)</label>
+            <textarea id="input-nota" rows="2" placeholder="Ej: después de vacaciones"></textarea>
+          </div>
           <button class="btn-save" id="btn-guardar-peso">Guardar</button>
           <div class="hint" id="hint-guardado" hidden>Guardado ✓</div>
         </div>
 
         <div class="card">
           <h2>Últimos registros</h2>
-          <div id="historial-lista"><div class="empty-state">Todavía no hay registros.</div></div>
+          <div id="historial-lista"></div>
         </div>
       </section>
 
       <!-- PROGRESO -->
       <section class="view" id="view-progreso">
-        <div class="segmented" id="progreso-seg">
-          <button class="seg-btn active" data-seg="semana">Semana</button>
-          <button class="seg-btn" data-seg="mes">Mes</button>
+        <div class="segmented" id="progreso-seg-main">
+          <button class="seg-btn active" data-seg="evolucion">Evolución</button>
           <button class="seg-btn" data-seg="comparar">Comparar</button>
         </div>
 
-        <div class="subview active" id="sub-semana">
+        <div class="subview active" id="sub-evolucion">
           <div class="card">
-            <h2>Últimos 7 días</h2>
-            <div class="chart-wrap"><canvas id="chart-semana"></canvas></div>
-            <div class="stat-grid">
-              <div class="stat-box"><div class="v" id="semana-min">--</div><div class="l">Mínimo</div></div>
-              <div class="stat-box"><div class="v" id="semana-prom">--</div><div class="l">Promedio</div></div>
-              <div class="stat-box"><div class="v" id="semana-max">--</div><div class="l">Máximo</div></div>
+            <div class="range-chips" id="range-chips">
+              <button class="chip active" data-rango="semana">Semana</button>
+              <button class="chip" data-rango="mes">Mes</button>
+              <button class="chip" data-rango="3m">3M</button>
+              <button class="chip" data-rango="6m">6M</button>
+              <button class="chip" data-rango="1a">1A</button>
+              <button class="chip" data-rango="personalizado">Desde…</button>
             </div>
-          </div>
-        </div>
-
-        <div class="subview" id="sub-mes">
-          <div class="card">
-            <h2>Últimos 30 días</h2>
-            <div class="chart-wrap"><canvas id="chart-mes"></canvas></div>
+            <div class="field-row" id="rango-personalizado-picker" hidden>
+              <label>Desde</label>
+              <input type="date" id="input-rango-desde">
+            </div>
+            <h2 id="evolucion-titulo">Últimos 7 días</h2>
+            <div class="chart-wrap"><canvas id="chart-evolucion"></canvas></div>
             <div class="stat-grid">
-              <div class="stat-box"><div class="v" id="mes-inicio">--</div><div class="l">Inicio del mes</div></div>
-              <div class="stat-box"><div class="v" id="mes-actual">--</div><div class="l">Actual</div></div>
-              <div class="stat-box"><div class="v" id="mes-delta">--</div><div class="l">Variación</div></div>
+              <div class="stat-box"><div class="v" id="evo-min">--</div><div class="l">Mínimo</div></div>
+              <div class="stat-box"><div class="v" id="evo-prom">--</div><div class="l">Promedio</div></div>
+              <div class="stat-box"><div class="v" id="evo-max">--</div><div class="l">Máximo</div></div>
             </div>
           </div>
         </div>
@@ -366,8 +420,8 @@
         <div class="subview" id="sub-comparar">
           <div class="card">
             <h2>Comparar dos fechas</h2>
-            <div class="field-row"><label>Antes</label><input type="date" id="comp-antes"></div>
-            <div class="field-row"><label>Ahora</label><input type="date" id="comp-ahora"></div>
+            <div class="field-row"><label>Antes</label><select id="comp-antes"></select></div>
+            <div class="field-row"><label>Ahora</label><select id="comp-ahora"></select></div>
             <button class="btn-save" id="btn-comparar">Comparar</button>
           </div>
           <div class="card" id="comparar-resultado" hidden></div>
@@ -378,7 +432,7 @@
       <section class="view" id="view-historial">
         <div class="card">
           <h2>Todos los registros</h2>
-          <div id="historial-completo-lista"><div class="empty-state">Todavía no hay registros.</div></div>
+          <div id="historial-completo-lista"></div>
         </div>
       </section>
 
@@ -405,6 +459,12 @@
               <div class="email" id="perfil-email"></div>
             </div>
           </div>
+        </div>
+
+        <div class="segmented compact" id="tema-seg">
+          <button class="seg-btn" data-tema="system">Sistema</button>
+          <button class="seg-btn" data-tema="light">Claro</button>
+          <button class="seg-btn" data-tema="dark">Oscuro</button>
         </div>
 
         <div class="card">
@@ -476,14 +536,15 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 let currentUser = null;
-let registros = {};       // { "2026-09-18": { peso, cintura, fecha } }
+let registros = {};       // { "2026-09-18": { peso, cintura, nota, fecha } }
 let alturaCm = null;
 let nombrePerfil = '';
+let temaPref = 'system';
 let metaConfig = null;    // { pesoInicial, fechaInicio, pesoObjetivo, fechaObjetivo }
-let chartSemana = null;
-let chartMes = null;
+let chartEvolucion = null;
 let historialEditando = null;
 let welcomeShown = false;
+let rangoActual = 'semana';
 
 // ---------- Helpers ----------
 function toDateStr(d){
@@ -507,6 +568,25 @@ function ultimoRegistro(){
   if (!fechas.length) return null;
   return { fecha: fechas[fechas.length-1], ...registros[fechas[fechas.length-1]] };
 }
+
+// ---------- Tema (claro/oscuro/sistema) ----------
+function aplicarTema(tema){
+  temaPref = tema;
+  if (tema === 'system') {
+    document.documentElement.removeAttribute('data-theme');
+  } else {
+    document.documentElement.setAttribute('data-theme', tema);
+  }
+  document.querySelectorAll('#tema-seg .seg-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.tema === tema);
+  });
+}
+document.querySelectorAll('#tema-seg .seg-btn').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    aplicarTema(btn.dataset.tema);
+    if (currentUser) await guardarPerfilCampo('tema', btn.dataset.tema);
+  });
+});
 
 // ---------- Auth (OAuth manual, redirect completo, sin popups) ----------
 const debugMsg = document.getElementById('debug-msg');
@@ -556,7 +636,7 @@ onAuthStateChanged(auth, async (user) => {
   if (user) {
     currentUser = user;
     document.getElementById('auth-screen').hidden = true;
-    document.getElementById('app').hidden = false;
+    document.getElementById('loading-screen').hidden = false;
     document.getElementById('perfil-foto').src = user.photoURL || '';
     document.getElementById('perfil-nombre-google').textContent = user.displayName || '';
     document.getElementById('perfil-email').textContent = user.email || '';
@@ -568,10 +648,14 @@ onAuthStateChanged(auth, async (user) => {
     await cargarMeta();
     await cargarRegistros();
     renderTodo();
+
+    document.getElementById('loading-screen').hidden = true;
+    document.getElementById('app').hidden = false;
     mostrarBienvenida(nombrePerfil || (user.displayName ? user.displayName.split(' ')[0] : ''));
   } else {
     currentUser = null;
     document.getElementById('auth-screen').hidden = false;
+    document.getElementById('loading-screen').hidden = true;
     document.getElementById('app').hidden = true;
     debugMsg.textContent = debugMsg.textContent || 'No hay sesión activa.';
   }
@@ -587,13 +671,17 @@ function mostrarBienvenida(nombre){
   setTimeout(() => { overlay.hidden = true; }, 1850);
 }
 
-// ---------- Firestore: perfil (altura + nombre) ----------
+// ---------- Firestore: perfil (altura + nombre + tema) ----------
 async function cargarPerfil(){
   const ref = doc(db, 'pesos', currentUser.uid, 'config', 'perfil');
   const snap = await getDoc(ref);
   if (snap.exists()) {
-    alturaCm = snap.data().alturaCm || null;
-    nombrePerfil = snap.data().nombre || '';
+    const d = snap.data();
+    alturaCm = d.alturaCm || null;
+    nombrePerfil = d.nombre || '';
+    aplicarTema(d.tema || 'system');
+  } else {
+    aplicarTema('system');
   }
   document.getElementById('input-altura').value = alturaCm || '';
   document.getElementById('input-nombre').value = nombrePerfil || '';
@@ -645,14 +733,14 @@ async function cargarRegistros(){
   snap.forEach(d => { registros[d.id] = d.data(); });
 }
 
-async function guardarRegistro(fecha, peso, cintura, avisarSiExiste){
+async function guardarRegistro(fecha, peso, cintura, nota, avisarSiExiste){
   if (avisarSiExiste && registros[fecha]) {
     const actual = registros[fecha];
     const ok = confirm(`Ya hay un registro para el ${formatFechaCorta(fecha)} (${fmtKg(actual.peso)} kg). ¿Querés sobrescribirlo?`);
     if (!ok) return false;
   }
   const ref = doc(db, 'pesos', currentUser.uid, 'registros', fecha);
-  const data = { peso, cintura: (cintura ?? null), fecha };
+  const data = { peso, cintura: (cintura ?? null), nota: (nota || null), fecha };
   await setDoc(ref, data);
   registros[fecha] = data;
   return true;
@@ -668,6 +756,7 @@ document.getElementById('input-fecha').addEventListener('change', (e) => {
   const r = registros[f];
   document.getElementById('input-peso').value = r ? r.peso : '';
   document.getElementById('input-cintura').value = (r && r.cintura != null) ? r.cintura : '';
+  document.getElementById('input-nota').value = (r && r.nota) ? r.nota : '';
 });
 
 document.getElementById('btn-guardar-peso').addEventListener('click', async () => {
@@ -676,11 +765,12 @@ document.getElementById('btn-guardar-peso').addEventListener('click', async () =
   if (!peso || peso <= 0) { alert('El peso es obligatorio.'); return; }
   const cinturaRaw = document.getElementById('input-cintura').value;
   const cintura = cinturaRaw ? parseFloat(cinturaRaw) : null;
+  const nota = document.getElementById('input-nota').value.trim();
 
   const btn = document.getElementById('btn-guardar-peso');
   btn.disabled = true;
   try {
-    const guardado = await guardarRegistro(fecha, peso, cintura, true);
+    const guardado = await guardarRegistro(fecha, peso, cintura, nota, true);
     if (guardado) {
       const hint = document.getElementById('hint-guardado');
       hint.hidden = false;
@@ -710,8 +800,8 @@ function categoriaIMC(imc){
 function renderTodo(){
   renderDashboard();
   renderHistorialPreview();
-  renderSemana();
-  renderMes();
+  renderEvolucion();
+  renderComparadorSelects();
   renderHistorialCompleto();
   renderMeta();
 }
@@ -776,49 +866,70 @@ function renderHistorialPreview(){
     const d = new Date(f + 'T00:00:00');
     const label = f === hoyStr ? 'Hoy' : `${DIAS_CORTOS[d.getDay()]} ${d.getDate()}/${d.getMonth()+1}`;
     const r = registros[f];
-    return `<div class="history-row"><span class="d">${label}</span><span class="w">${fmtKg(r.peso)} kg${r.cintura!=null?` · ${r.cintura} cm`:''}</span></div>`;
+    return `<div class="history-row">
+      <div class="row1"><span class="d">${label}</span><span class="w">${fmtKg(r.peso)} kg${r.cintura!=null?` · ${r.cintura} cm`:''}</span></div>
+      ${r.nota ? `<div class="nota">${r.nota}</div>` : ''}
+    </div>`;
   }).join('');
 }
 
-// ---------- Render: Semana / Mes ----------
-function renderSemana(){
+// ---------- Render: Evolución (rango dinámico) ----------
+function tituloRango(rango){
+  return {
+    semana: 'Últimos 7 días', mes: 'Últimos 30 días', '3m': 'Últimos 3 meses',
+    '6m': 'Últimos 6 meses', '1a': 'Último año', personalizado: 'Desde la fecha elegida'
+  }[rango];
+}
+function calcularRangoFechas(rango){
   const hoy = new Date();
+  let desde;
+  if (rango === 'semana') desde = addDays(hoy, -6);
+  else if (rango === 'mes') desde = addDays(hoy, -29);
+  else if (rango === '3m') desde = addDays(hoy, -89);
+  else if (rango === '6m') desde = addDays(hoy, -179);
+  else if (rango === '1a') desde = addDays(hoy, -364);
+  else if (rango === 'personalizado') {
+    const val = document.getElementById('input-rango-desde').value;
+    desde = val ? new Date(val + 'T00:00:00') : addDays(hoy, -29);
+  }
+  return { desde, hasta: hoy };
+}
+
+document.querySelectorAll('#range-chips .chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.querySelectorAll('#range-chips .chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    rangoActual = chip.dataset.rango;
+    const picker = document.getElementById('rango-personalizado-picker');
+    picker.hidden = rangoActual !== 'personalizado';
+    if (rangoActual === 'personalizado') {
+      const inp = document.getElementById('input-rango-desde');
+      inp.max = toDateStr(new Date());
+      if (!inp.value) inp.value = toDateStr(addDays(new Date(), -29));
+    }
+    renderEvolucion();
+  });
+});
+document.getElementById('input-rango-desde').addEventListener('change', renderEvolucion);
+
+function renderEvolucion(){
+  document.getElementById('evolucion-titulo').textContent = tituloRango(rangoActual);
+  const { desde, hasta } = calcularRangoFechas(rangoActual);
+  const dias = Math.max(0, diffDays(desde, hasta));
   const labels = [], data = [];
-  for (let i = 6; i >= 0; i--) {
-    const d = addDays(hoy, -i);
-    labels.push(DIAS_CORTOS[d.getDay()]);
+  for (let i = 0; i <= dias; i++) {
+    const d = addDays(desde, i);
+    labels.push(dias > 40 ? `${d.getDate()}/${d.getMonth()+1}` : `${d.getDate()}/${d.getMonth()+1}`);
     data.push(registros[toDateStr(d)] ? registros[toDateStr(d)].peso : null);
   }
   const valores = data.filter(v => v != null);
-  document.getElementById('semana-min').textContent = valores.length ? fmtKg(Math.min(...valores)) : '--';
-  document.getElementById('semana-max').textContent = valores.length ? fmtKg(Math.max(...valores)) : '--';
-  document.getElementById('semana-prom').textContent = valores.length ? fmtKg(valores.reduce((a,b)=>a+b,0)/valores.length) : '--';
-  chartSemana = pintarChart(chartSemana, 'chart-semana', labels, data, false);
+  document.getElementById('evo-min').textContent = valores.length ? fmtKg(Math.min(...valores)) : '--';
+  document.getElementById('evo-max').textContent = valores.length ? fmtKg(Math.max(...valores)) : '--';
+  document.getElementById('evo-prom').textContent = valores.length ? fmtKg(valores.reduce((a,b)=>a+b,0)/valores.length) : '--';
+  chartEvolucion = pintarChart(chartEvolucion, 'chart-evolucion', labels, data);
 }
 
-function renderMes(){
-  const hoy = new Date();
-  const labels = [], data = [];
-  for (let i = 29; i >= 0; i--) {
-    const d = addDays(hoy, -i);
-    labels.push(String(d.getDate()));
-    data.push(registros[toDateStr(d)] ? registros[toDateStr(d)].peso : null);
-  }
-  const valores = data.filter(v => v != null);
-  const inicio = valores.length ? valores[0] : null;
-  const actual = valores.length ? valores[valores.length-1] : null;
-  document.getElementById('mes-inicio').textContent = inicio != null ? fmtKg(inicio) : '--';
-  document.getElementById('mes-actual').textContent = actual != null ? fmtKg(actual) : '--';
-  if (inicio != null && actual != null) {
-    const delta = actual - inicio;
-    document.getElementById('mes-delta').textContent = (delta >= 0 ? '+' : '') + fmtKg(delta);
-  } else {
-    document.getElementById('mes-delta').textContent = '--';
-  }
-  chartMes = pintarChart(chartMes, 'chart-mes', labels, data, false);
-}
-
-function pintarChart(instance, canvasId, labels, data, minimal){
+function pintarChart(instance, canvasId, labels, data){
   const canvas = document.getElementById(canvasId);
   if (!canvas) return instance;
   const ctx = canvas.getContext('2d');
@@ -835,27 +946,27 @@ function pintarChart(instance, canvasId, labels, data, minimal){
         fill: true,
         tension: 0.35,
         spanGaps: true,
-        pointRadius: minimal ? 0 : 2,
+        pointRadius: labels.length > 40 ? 0 : 2,
         pointBackgroundColor: accent,
-        borderWidth: minimal ? 2 : 2.5
+        borderWidth: 2.5
       }]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
       plugins: { legend: { display: false } },
-      scales: minimal ? { y: { display:false }, x: { display:false } } : {
+      scales: {
         y: { grid: { color: 'rgba(128,128,128,0.12)' }, ticks: { color: '#8E8E93', font: { size: 11 } } },
-        x: { grid: { display: false }, ticks: { color: '#8E8E93', font: { size: 11 }, maxRotation: 0 } }
+        x: { grid: { display: false }, ticks: { color: '#8E8E93', font: { size: 11 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 7 } }
       }
     }
   });
 }
 
-// ---------- Progreso: segmentado ----------
-document.querySelectorAll('#progreso-seg .seg-btn').forEach(btn => {
+// ---------- Progreso: segmentado principal (Evolución / Comparar) ----------
+document.querySelectorAll('#progreso-seg-main .seg-btn').forEach(btn => {
   btn.addEventListener('click', () => {
-    document.querySelectorAll('#progreso-seg .seg-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('#progreso-seg-main .seg-btn').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('#view-progreso .subview').forEach(v => v.classList.remove('active'));
     btn.classList.add('active');
     document.getElementById('sub-' + btn.dataset.seg).classList.add('active');
@@ -863,18 +974,28 @@ document.querySelectorAll('#progreso-seg .seg-btn').forEach(btn => {
 });
 
 // ---------- Comparador ----------
+function renderComparadorSelects(){
+  const fechas = Object.keys(registros).sort();
+  const selAntes = document.getElementById('comp-antes');
+  const selAhora = document.getElementById('comp-ahora');
+  const valAntes = selAntes.value, valAhora = selAhora.value;
+  const opciones = fechas.map(f => `<option value="${f}">${formatFechaCorta(f)} — ${fmtKg(registros[f].peso)} kg</option>`).join('');
+  selAntes.innerHTML = opciones;
+  selAhora.innerHTML = opciones;
+  if (fechas.length) {
+    selAntes.value = fechas.includes(valAntes) ? valAntes : fechas[0];
+    selAhora.value = fechas.includes(valAhora) ? valAhora : fechas[fechas.length - 1];
+  }
+}
+
 document.getElementById('btn-comparar').addEventListener('click', () => {
   const fAntes = document.getElementById('comp-antes').value;
   const fAhora = document.getElementById('comp-ahora').value;
   const resultado = document.getElementById('comparar-resultado');
-  if (!fAntes || !fAhora) { alert('Elegí ambas fechas.'); return; }
+  if (!fAntes || !fAhora) { alert('No hay suficientes registros para comparar.'); return; }
   const rAntes = registros[fAntes];
   const rAhora = registros[fAhora];
-  if (!rAntes || !rAhora) {
-    alert('No hay un registro de peso guardado para una de esas fechas.');
-    resultado.hidden = true;
-    return;
-  }
+
   const dias = diffDays(new Date(fAntes + 'T00:00:00'), new Date(fAhora + 'T00:00:00'));
   const deltaPeso = rAhora.peso - rAntes.peso;
   const deltaCintura = (rAntes.cintura != null && rAhora.cintura != null) ? (rAhora.cintura - rAntes.cintura) : null;
@@ -918,13 +1039,17 @@ function renderHistorialCompleto(){
     <div class="hist-row-wrap">
       <div class="hist-row" data-action="toggle" data-fecha="${f}">
         <div class="hist-fecha">${formatFechaCorta(f)}</div>
-        <div class="hist-datos">${fmtKg(r.peso)} kg${r.cintura!=null?` · ${r.cintura} cm`:''}</div>
+        <div class="hist-datos">
+          <div class="principal">${fmtKg(r.peso)} kg${r.cintura!=null?` · ${r.cintura} cm`:''}</div>
+          ${r.nota ? `<div class="nota">${r.nota}</div>` : ''}
+        </div>
         <button class="hist-edit-btn" data-action="toggle" data-fecha="${f}">✎</button>
       </div>
       ${editing ? `
         <div class="hist-edit-panel">
           <div class="field-row"><label>Peso (kg)</label><input type="number" step="0.1" class="hist-input-peso" value="${r.peso}"></div>
           <div class="field-row"><label>Cintura (cm)</label><input type="number" step="0.1" class="hist-input-cintura" value="${r.cintura ?? ''}"></div>
+          <div class="field-row stack"><label>Nota</label><textarea class="hist-input-nota" rows="2">${r.nota ?? ''}</textarea></div>
           <div class="hist-edit-actions">
             <button class="btn-save small" data-action="guardar" data-fecha="${f}">Guardar</button>
             <button class="btn-danger-outline" data-action="eliminar" data-fecha="${f}">Eliminar</button>
@@ -950,7 +1075,8 @@ document.getElementById('historial-completo-lista').addEventListener('click', as
     if (!peso || peso <= 0) { alert('El peso es obligatorio.'); return; }
     const cinturaRaw = panel.querySelector('.hist-input-cintura').value;
     const cintura = cinturaRaw ? parseFloat(cinturaRaw) : null;
-    await guardarRegistro(fecha, peso, cintura, false);
+    const nota = panel.querySelector('.hist-input-nota').value.trim();
+    await guardarRegistro(fecha, peso, cintura, nota, false);
     historialEditando = null;
     renderTodo();
   } else if (action === 'eliminar') {
@@ -1018,6 +1144,13 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     document.getElementById('header-date').style.display = view === 'hoy' ? '' : 'none';
   });
 });
+
+// ---------- PWA: service worker ----------
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+}
 </script>
 </body>
 </html>
