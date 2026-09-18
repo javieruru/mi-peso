@@ -89,6 +89,24 @@
   }
   .btn-google:active{transform:scale(0.97);}
 
+  /* ---------- Welcome overlay ---------- */
+  #welcome-overlay{
+    position:fixed;inset:0;z-index:80;
+    display:flex;align-items:center;justify-content:center;
+    background:rgba(0,0,0,0.18);
+    backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+    transition:opacity .6s ease, backdrop-filter .6s ease;
+    opacity:1;
+  }
+  @media (prefers-color-scheme: dark){
+    #welcome-overlay{ background:rgba(0,0,0,0.45); }
+  }
+  #welcome-overlay.hide{ opacity:0; backdrop-filter:blur(0px); -webkit-backdrop-filter:blur(0px); pointer-events:none; }
+  #welcome-text{
+    font-size:32px;font-weight:700;color:#fff;letter-spacing:-0.02em;
+    text-shadow:0 2px 20px rgba(0,0,0,0.25);
+  }
+
   /* ---------- App layout ---------- */
   #app{flex:1;display:flex;flex-direction:column;min-height:100dvh;}
   header.topbar{
@@ -100,6 +118,8 @@
   main{flex:1;overflow-y:auto;padding:4px 16px 100px;}
   .view{display:none;animation:fade .18s ease;}
   .view.active{display:block;}
+  .subview{display:none;}
+  .subview.active{display:block;animation:fade .18s ease;}
   @keyframes fade{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:none;}}
 
   .card{
@@ -111,18 +131,43 @@
   }
   .card h2{font-size:13px;text-transform:none;color:var(--text-2);margin:0 0 12px;font-weight:600;}
 
-  /* Hoy view */
-  .weight-input-row{display:flex;align-items:center;gap:12px;}
-  .weight-input-row input[type=number]{
-    flex:1;
-    font-size:34px;font-weight:700;
-    border:none;background:transparent;color:var(--text);
-    width:100%;
-    -moz-appearance:textfield;
+  /* Segmented control */
+  .segmented{
+    display:flex;background:rgba(120,120,128,0.12);
+    border-radius:10px;padding:2px;margin-bottom:14px;
   }
-  .weight-input-row input::-webkit-outer-spin-button,
-  .weight-input-row input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
-  .weight-input-row .unit{font-size:17px;color:var(--text-2);font-weight:500;}
+  .seg-btn{
+    flex:1;border:none;background:transparent;padding:8px 0;
+    border-radius:8px;font-size:13px;font-weight:600;color:var(--text-2);cursor:pointer;
+  }
+  .seg-btn.active{background:var(--surface);color:var(--text);box-shadow:var(--shadow);}
+
+  /* Dashboard */
+  .dash-main{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:6px;}
+  .dash-peso{font-size:38px;font-weight:700;letter-spacing:-0.02em;}
+  .dash-peso .u{font-size:16px;color:var(--text-2);font-weight:500;}
+  .dash-delta{font-size:14px;font-weight:600;}
+  .dash-delta.neg{color:var(--ok);}
+  .dash-delta.pos{color:var(--danger);}
+  .dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0;}
+  .dash-box{background:rgba(120,120,128,0.08);border-radius:var(--radius-sm);padding:12px;}
+  .dash-box .v{font-size:18px;font-weight:700;}
+  .dash-box .l{font-size:11px;color:var(--text-2);margin-top:2px;}
+  .dash-hint{font-size:13px;color:var(--text-2);}
+  .mini-chart-wrap{position:relative;height:90px;margin-top:10px;}
+
+  /* Progress bar */
+  .progress-bar-track{height:10px;background:rgba(120,120,128,0.16);border-radius:999px;overflow:hidden;margin:10px 0;}
+  .progress-bar-fill{height:100%;background:var(--accent);border-radius:999px;transition:width .4s ease;}
+
+  /* Registrar form (Hoy) */
+  .field-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);}
+  .field-row:last-of-type{border-bottom:none;}
+  .field-row label{font-size:15px;color:var(--text-2);}
+  .field-row input{
+    text-align:right;font-size:16px;border:none;background:transparent;color:var(--text);
+    width:150px;font-weight:600;font-family:inherit;
+  }
   .btn-save{
     margin-top:14px;width:100%;
     background:var(--accent);color:var(--accent-ink);
@@ -131,12 +176,11 @@
   }
   .btn-save:active{opacity:.85;}
   .btn-save:disabled{opacity:.45;}
+  .btn-save.small{padding:10px;font-size:14px;flex:1;}
 
   .imc-row{display:flex;align-items:center;justify-content:space-between;}
   .imc-value{font-size:40px;font-weight:700;letter-spacing:-0.02em;}
-  .imc-badge{
-    padding:6px 12px;border-radius:999px;font-size:13px;font-weight:600;
-  }
+  .imc-badge{padding:6px 12px;border-radius:999px;font-size:13px;font-weight:600;}
   .imc-badge.bajo{background:rgba(10,132,255,0.12);color:var(--info);}
   .imc-badge.normal{background:rgba(48,179,85,0.12);color:var(--ok);}
   .imc-badge.sobre{background:rgba(255,159,10,0.14);color:var(--warn);}
@@ -158,13 +202,32 @@
   .stat-box .v{font-size:19px;font-weight:700;}
   .stat-box .l{font-size:11px;color:var(--text-2);margin-top:2px;}
 
-  /* Ajustes */
-  .field-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;}
-  .field-row label{font-size:15px;}
-  .field-row input{
-    text-align:right;font-size:16px;border:none;background:transparent;color:var(--text);
-    width:90px;font-weight:600;
+  /* Comparador */
+  .compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;}
+  .compare-col{background:rgba(120,120,128,0.08);border-radius:var(--radius-sm);padding:14px;text-align:center;}
+  .compare-label{font-size:11px;color:var(--text-2);font-weight:700;letter-spacing:.04em;margin-bottom:6px;}
+  .compare-peso{font-size:22px;font-weight:700;}
+  .compare-cintura{font-size:13px;color:var(--text-2);margin-top:2px;}
+  .compare-fecha{font-size:12px;color:var(--text-2);margin-top:6px;}
+  .compare-deltas{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+
+  /* Historial completo */
+  .hist-row-wrap{border-bottom:1px solid var(--border);}
+  .hist-row-wrap:last-child{border-bottom:none;}
+  .hist-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;cursor:pointer;}
+  .hist-fecha{font-size:14px;color:var(--text-2);width:80px;flex-shrink:0;}
+  .hist-datos{flex:1;font-size:15px;font-weight:600;text-align:right;padding-right:10px;}
+  .hist-cintura{font-weight:500;color:var(--text-2);}
+  .hist-edit-btn{background:none;border:none;color:var(--accent);font-size:16px;cursor:pointer;padding:4px 6px;}
+  .hist-edit-panel{padding:6px 0 14px;}
+  .hist-edit-panel .field-row input{width:120px;}
+  .hist-edit-actions{display:flex;gap:10px;margin-top:10px;}
+  .btn-danger-outline{
+    flex:1;background:transparent;border:1px solid var(--danger);color:var(--danger);
+    padding:10px;border-radius:var(--radius-sm);font-size:14px;font-weight:600;cursor:pointer;
   }
+
+  /* Ajustes */
   .btn-logout{
     width:100%;margin-top:8px;background:transparent;color:var(--danger);
     border:none;padding:14px;font-size:16px;font-weight:600;cursor:pointer;
@@ -191,11 +254,12 @@
     display:flex;flex-direction:column;align-items:center;gap:3px;
     padding:9px 0 8px;color:var(--text-2);cursor:pointer;
   }
-  nav.tabbar button svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.8;}
-  nav.tabbar button span{font-size:10px;font-weight:600;}
+  nav.tabbar button svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;}
+  nav.tabbar button span{font-size:9.5px;font-weight:600;}
   nav.tabbar button.active{color:var(--accent);}
 
   .hint{font-size:13px;color:var(--text-2);text-align:center;margin-top:10px;}
+  .empty-state{color:var(--text-2);font-size:14px;text-align:center;padding:12px 0;}
   [hidden]{display:none !important;}
 </style>
 </head>
@@ -219,6 +283,11 @@
     <div id="debug-msg" style="font-size:12px;color:var(--text-2);max-width:300px;word-break:break-word;"></div>
   </div>
 
+  <!-- ---------- WELCOME OVERLAY ---------- -->
+  <div id="welcome-overlay" hidden>
+    <div id="welcome-text">Hola</div>
+  </div>
+
   <!-- ---------- APP ---------- -->
   <div id="app" hidden>
 
@@ -233,11 +302,25 @@
 
       <!-- HOY -->
       <section class="view active" id="view-hoy">
+
+        <div class="card" id="dashboard-card">
+          <h2>Resumen</h2>
+          <div id="dashboard-body"><div class="empty-state">Registrá tu primer peso para ver tu resumen.</div></div>
+        </div>
+
         <div class="card">
-          <h2>Peso de hoy</h2>
-          <div class="weight-input-row">
+          <h2>Registrar</h2>
+          <div class="field-row">
+            <label>Fecha</label>
+            <input type="date" id="input-fecha">
+          </div>
+          <div class="field-row">
+            <label>Peso (kg)</label>
             <input type="number" id="input-peso" inputmode="decimal" step="0.1" placeholder="0.0">
-            <span class="unit">kg</span>
+          </div>
+          <div class="field-row">
+            <label>Cintura (cm)</label>
+            <input type="number" id="input-cintura" inputmode="decimal" step="0.1" placeholder="Opcional">
           </div>
           <button class="btn-save" id="btn-guardar-peso">Guardar</button>
           <div class="hint" id="hint-guardado" hidden>Guardado ✓</div>
@@ -252,34 +335,72 @@
 
         <div class="card">
           <h2>Últimos registros</h2>
-          <div id="historial-lista"><div class="imc-empty">Todavía no hay registros.</div></div>
+          <div id="historial-lista"><div class="empty-state">Todavía no hay registros.</div></div>
         </div>
       </section>
 
-      <!-- SEMANA -->
-      <section class="view" id="view-semana">
-        <div class="card">
-          <h2>Últimos 7 días</h2>
-          <div class="chart-wrap"><canvas id="chart-semana"></canvas></div>
-          <div class="stat-grid">
-            <div class="stat-box"><div class="v" id="semana-min">--</div><div class="l">Mínimo</div></div>
-            <div class="stat-box"><div class="v" id="semana-prom">--</div><div class="l">Promedio</div></div>
-            <div class="stat-box"><div class="v" id="semana-max">--</div><div class="l">Máximo</div></div>
+      <!-- PROGRESO -->
+      <section class="view" id="view-progreso">
+        <div class="segmented" id="progreso-seg">
+          <button class="seg-btn active" data-seg="semana">Semana</button>
+          <button class="seg-btn" data-seg="mes">Mes</button>
+          <button class="seg-btn" data-seg="comparar">Comparar</button>
+        </div>
+
+        <div class="subview active" id="sub-semana">
+          <div class="card">
+            <h2>Últimos 7 días</h2>
+            <div class="chart-wrap"><canvas id="chart-semana"></canvas></div>
+            <div class="stat-grid">
+              <div class="stat-box"><div class="v" id="semana-min">--</div><div class="l">Mínimo</div></div>
+              <div class="stat-box"><div class="v" id="semana-prom">--</div><div class="l">Promedio</div></div>
+              <div class="stat-box"><div class="v" id="semana-max">--</div><div class="l">Máximo</div></div>
+            </div>
           </div>
+        </div>
+
+        <div class="subview" id="sub-mes">
+          <div class="card">
+            <h2>Últimos 30 días</h2>
+            <div class="chart-wrap"><canvas id="chart-mes"></canvas></div>
+            <div class="stat-grid">
+              <div class="stat-box"><div class="v" id="mes-inicio">--</div><div class="l">Inicio del mes</div></div>
+              <div class="stat-box"><div class="v" id="mes-actual">--</div><div class="l">Actual</div></div>
+              <div class="stat-box"><div class="v" id="mes-delta">--</div><div class="l">Variación</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="subview" id="sub-comparar">
+          <div class="card">
+            <h2>Comparar dos fechas</h2>
+            <div class="field-row"><label>Antes</label><input type="date" id="comp-antes"></div>
+            <div class="field-row"><label>Ahora</label><input type="date" id="comp-ahora"></div>
+            <button class="btn-save" id="btn-comparar">Comparar</button>
+          </div>
+          <div class="card" id="comparar-resultado" hidden></div>
         </div>
       </section>
 
-      <!-- MES -->
-      <section class="view" id="view-mes">
+      <!-- HISTORIAL -->
+      <section class="view" id="view-historial">
         <div class="card">
-          <h2>Últimos 30 días</h2>
-          <div class="chart-wrap"><canvas id="chart-mes"></canvas></div>
-          <div class="stat-grid">
-            <div class="stat-box"><div class="v" id="mes-inicio">--</div><div class="l">Inicio del mes</div></div>
-            <div class="stat-box"><div class="v" id="mes-actual">--</div><div class="l">Actual</div></div>
-            <div class="stat-box"><div class="v" id="mes-delta">--</div><div class="l">Variación</div></div>
-          </div>
+          <h2>Todos los registros</h2>
+          <div id="historial-completo-lista"><div class="empty-state">Todavía no hay registros.</div></div>
         </div>
+      </section>
+
+      <!-- META -->
+      <section class="view" id="view-meta">
+        <div class="card">
+          <h2>Definir meta</h2>
+          <div class="field-row"><label>Peso inicial (kg)</label><input type="number" step="0.1" id="meta-peso-inicial" inputmode="decimal"></div>
+          <div class="field-row"><label>Fecha de inicio</label><input type="date" id="meta-fecha-inicio"></div>
+          <div class="field-row"><label>Peso objetivo (kg)</label><input type="number" step="0.1" id="meta-peso-objetivo" inputmode="decimal"></div>
+          <div class="field-row"><label>Fecha objetivo</label><input type="date" id="meta-fecha-objetivo"></div>
+          <button class="btn-save" id="btn-guardar-meta">Guardar meta</button>
+        </div>
+        <div class="card" id="meta-resumen" hidden></div>
       </section>
 
       <!-- AJUSTES -->
@@ -288,7 +409,7 @@
           <div class="profile-row">
             <img id="perfil-foto" src="" alt="">
             <div>
-              <div class="name" id="perfil-nombre"></div>
+              <div class="name" id="perfil-nombre-google"></div>
               <div class="email" id="perfil-email"></div>
             </div>
           </div>
@@ -296,6 +417,10 @@
 
         <div class="card">
           <h2>Datos personales</h2>
+          <div class="field-row">
+            <label>Nombre</label>
+            <input type="text" id="input-nombre" placeholder="Tu nombre">
+          </div>
           <div class="field-row">
             <label>Altura (cm)</label>
             <input type="number" id="input-altura" inputmode="decimal" placeholder="170">
@@ -314,13 +439,17 @@
         <svg viewBox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 0 0 1 1h3m10-11l2 2m-2-2v10a1 1 0 0 1-1 1h-3m-6 0a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1m-4 0h4"/></svg>
         <span>Hoy</span>
       </button>
-      <button class="tab-btn" data-view="semana">
-        <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 15l3-4 3 2 5-6"/></svg>
-        <span>Semana</span>
+      <button class="tab-btn" data-view="progreso">
+        <svg viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg>
+        <span>Progreso</span>
       </button>
-      <button class="tab-btn" data-view="mes">
-        <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-        <span>Mes</span>
+      <button class="tab-btn" data-view="historial">
+        <svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13"/><path d="M3 6h.01M3 12h.01M3 18h.01"/></svg>
+        <span>Historial</span>
+      </button>
+      <button class="tab-btn" data-view="meta">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg>
+        <span>Meta</span>
       </button>
       <button class="tab-btn" data-view="ajustes">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
@@ -338,7 +467,7 @@ import {
   getAuth, GoogleAuthProvider, signInWithCredential, signOut, onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 import {
-  getFirestore, doc, setDoc, getDoc, collection, getDocs
+  getFirestore, doc, setDoc, getDoc, deleteDoc, collection, getDocs
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -355,12 +484,17 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 let currentUser = null;
-let registros = {};      // { "2026-09-18": 78.4, ... }
+let registros = {};       // { "2026-09-18": { peso, cintura, fecha } }
 let alturaCm = null;
+let nombrePerfil = '';
+let metaConfig = null;    // { pesoInicial, fechaInicio, pesoObjetivo, fechaObjetivo }
 let chartSemana = null;
 let chartMes = null;
+let chartDashboard = null;
+let historialEditando = null;
+let welcomeShown = false;
 
-// ---------- Helpers de fecha ----------
+// ---------- Helpers ----------
 function toDateStr(d){
   const y = d.getFullYear();
   const m = String(d.getMonth()+1).padStart(2,'0');
@@ -368,10 +502,22 @@ function toDateStr(d){
   return `${y}-${m}-${day}`;
 }
 function addDays(d, n){ const r = new Date(d); r.setDate(r.getDate()+n); return r; }
+function diffDays(a, b){ return Math.round((b - a) / 86400000); }
+function fmtKg(n){ return n.toFixed(1).replace('.', ','); }
+function clamp(n, min, max){ return Math.max(min, Math.min(max, n)); }
 const DIAS_CORTOS = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
 const MESES = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+function formatFechaCorta(f){
+  const d = new Date(f + 'T00:00:00');
+  return `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`;
+}
+function ultimoRegistro(){
+  const fechas = Object.keys(registros).sort();
+  if (!fechas.length) return null;
+  return { fecha: fechas[fechas.length-1], ...registros[fechas[fechas.length-1]] };
+}
 
-// ---------- Auth ----------
+// ---------- Auth (OAuth manual, redirect completo, sin popups) ----------
 const debugMsg = document.getElementById('debug-msg');
 const GOOGLE_CLIENT_ID = "229773400542-aut7o3f656pkf4r4g5bvl2piovglinm5.apps.googleusercontent.com";
 const REDIRECT_URI = "https://javieruru.github.io/mi-peso/";
@@ -400,7 +546,6 @@ document.getElementById('btn-logout').addEventListener('click', () => {
   signOut(auth);
 });
 
-// Si volvemos de Google con un id_token en el fragmento de la URL, completamos el login
 (function completarLoginSiVuelveDeGoogle(){
   if (window.location.hash.includes('id_token=')) {
     const params = new URLSearchParams(window.location.hash.substring(1));
@@ -422,13 +567,17 @@ onAuthStateChanged(auth, async (user) => {
     document.getElementById('auth-screen').hidden = true;
     document.getElementById('app').hidden = false;
     document.getElementById('perfil-foto').src = user.photoURL || '';
-    document.getElementById('perfil-nombre').textContent = user.displayName || '';
+    document.getElementById('perfil-nombre-google').textContent = user.displayName || '';
     document.getElementById('perfil-email').textContent = user.email || '';
+
+    document.getElementById('input-fecha').max = toDateStr(new Date());
+    document.getElementById('input-fecha').value = toDateStr(new Date());
+
     await cargarPerfil();
+    await cargarMeta();
     await cargarRegistros();
-    renderHoy();
-    renderSemana();
-    renderMes();
+    renderTodo();
+    mostrarBienvenida(nombrePerfil || (user.displayName ? user.displayName.split(' ')[0] : ''));
   } else {
     currentUser = null;
     document.getElementById('auth-screen').hidden = false;
@@ -437,22 +586,65 @@ onAuthStateChanged(auth, async (user) => {
   }
 });
 
-// ---------- Firestore: perfil (altura) ----------
+function mostrarBienvenida(nombre){
+  if (welcomeShown) return;
+  welcomeShown = true;
+  const overlay = document.getElementById('welcome-overlay');
+  document.getElementById('welcome-text').textContent = 'Hola' + (nombre ? ' ' + nombre : '');
+  overlay.hidden = false;
+  setTimeout(() => overlay.classList.add('hide'), 1200);
+  setTimeout(() => { overlay.hidden = true; }, 1850);
+}
+
+// ---------- Firestore: perfil (altura + nombre) ----------
 async function cargarPerfil(){
   const ref = doc(db, 'pesos', currentUser.uid, 'config', 'perfil');
   const snap = await getDoc(ref);
   if (snap.exists()) {
     alturaCm = snap.data().alturaCm || null;
-    document.getElementById('input-altura').value = alturaCm || '';
+    nombrePerfil = snap.data().nombre || '';
   }
+  document.getElementById('input-altura').value = alturaCm || '';
+  document.getElementById('input-nombre').value = nombrePerfil || '';
+}
+async function guardarPerfilCampo(campo, valor){
+  const ref = doc(db, 'pesos', currentUser.uid, 'config', 'perfil');
+  await setDoc(ref, { [campo]: valor }, { merge: true });
 }
 document.getElementById('input-altura').addEventListener('change', async (e) => {
   const val = parseFloat(e.target.value);
   if (!val || val <= 0) return;
   alturaCm = val;
-  const ref = doc(db, 'pesos', currentUser.uid, 'config', 'perfil');
-  await setDoc(ref, { alturaCm: val }, { merge: true });
-  renderHoy();
+  await guardarPerfilCampo('alturaCm', val);
+  renderDashboard();
+  renderHoyImc();
+});
+document.getElementById('input-nombre').addEventListener('change', async (e) => {
+  const val = e.target.value.trim();
+  nombrePerfil = val;
+  await guardarPerfilCampo('nombre', val);
+});
+
+// ---------- Firestore: meta ----------
+async function cargarMeta(){
+  const ref = doc(db, 'pesos', currentUser.uid, 'config', 'meta');
+  const snap = await getDoc(ref);
+  metaConfig = snap.exists() ? snap.data() : null;
+}
+document.getElementById('btn-guardar-meta').addEventListener('click', async () => {
+  const pesoInicial = parseFloat(document.getElementById('meta-peso-inicial').value);
+  const fechaInicio = document.getElementById('meta-fecha-inicio').value;
+  const pesoObjetivo = parseFloat(document.getElementById('meta-peso-objetivo').value);
+  const fechaObjetivo = document.getElementById('meta-fecha-objetivo').value;
+  if (!pesoInicial || !fechaInicio || !pesoObjetivo || !fechaObjetivo) {
+    alert('Completá los 4 campos para definir la meta.');
+    return;
+  }
+  metaConfig = { pesoInicial, fechaInicio, pesoObjetivo, fechaObjetivo };
+  const ref = doc(db, 'pesos', currentUser.uid, 'config', 'meta');
+  await setDoc(ref, metaConfig);
+  renderMeta();
+  renderDashboard();
 });
 
 // ---------- Firestore: registros ----------
@@ -460,25 +652,51 @@ async function cargarRegistros(){
   const ref = collection(db, 'pesos', currentUser.uid, 'registros');
   const snap = await getDocs(ref);
   registros = {};
-  snap.forEach(d => { registros[d.id] = d.data().peso; });
+  snap.forEach(d => { registros[d.id] = d.data(); });
 }
 
-document.getElementById('btn-guardar-peso').addEventListener('click', async () => {
-  const val = parseFloat(document.getElementById('input-peso').value);
-  if (!val || val <= 0) { alert('Ingresá un peso válido.'); return; }
-  const fecha = toDateStr(new Date());
+async function guardarRegistro(fecha, peso, cintura, avisarSiExiste){
+  if (avisarSiExiste && registros[fecha]) {
+    const actual = registros[fecha];
+    const ok = confirm(`Ya hay un registro para el ${formatFechaCorta(fecha)} (${fmtKg(actual.peso)} kg). ¿Querés sobrescribirlo?`);
+    if (!ok) return false;
+  }
   const ref = doc(db, 'pesos', currentUser.uid, 'registros', fecha);
+  const data = { peso, cintura: (cintura ?? null), fecha };
+  await setDoc(ref, data);
+  registros[fecha] = data;
+  return true;
+}
+async function eliminarRegistro(fecha){
+  const ref = doc(db, 'pesos', currentUser.uid, 'registros', fecha);
+  await deleteDoc(ref);
+  delete registros[fecha];
+}
+
+document.getElementById('input-fecha').addEventListener('change', (e) => {
+  const f = e.target.value;
+  const r = registros[f];
+  document.getElementById('input-peso').value = r ? r.peso : '';
+  document.getElementById('input-cintura').value = (r && r.cintura != null) ? r.cintura : '';
+});
+
+document.getElementById('btn-guardar-peso').addEventListener('click', async () => {
+  const fecha = document.getElementById('input-fecha').value || toDateStr(new Date());
+  const peso = parseFloat(document.getElementById('input-peso').value);
+  if (!peso || peso <= 0) { alert('El peso es obligatorio.'); return; }
+  const cinturaRaw = document.getElementById('input-cintura').value;
+  const cintura = cinturaRaw ? parseFloat(cinturaRaw) : null;
+
   const btn = document.getElementById('btn-guardar-peso');
   btn.disabled = true;
   try {
-    await setDoc(ref, { peso: val, fecha }, { merge: true });
-    registros[fecha] = val;
-    const hint = document.getElementById('hint-guardado');
-    hint.hidden = false;
-    setTimeout(() => hint.hidden = true, 1800);
-    renderHoy();
-    renderSemana();
-    renderMes();
+    const guardado = await guardarRegistro(fecha, peso, cintura, true);
+    if (guardado) {
+      const hint = document.getElementById('hint-guardado');
+      hint.hidden = false;
+      setTimeout(() => hint.hidden = true, 1800);
+      renderTodo();
+    }
   } catch (err) {
     alert('No se pudo guardar: ' + err.message);
   } finally {
@@ -487,8 +705,8 @@ document.getElementById('btn-guardar-peso').addEventListener('click', async () =
 });
 
 // ---------- IMC ----------
-function calcularIMC(pesoKg, alturaCm){
-  const m = alturaCm / 100;
+function calcularIMC(pesoKg, alturaCmVal){
+  const m = alturaCmVal / 100;
   return pesoKg / (m*m);
 }
 function categoriaIMC(imc){
@@ -498,19 +716,72 @@ function categoriaIMC(imc){
   return { label: 'Obesidad', cls: 'obesidad' };
 }
 
-// ---------- Render: Hoy ----------
-function renderHoy(){
-  const hoy = new Date();
+// ---------- Render: todo ----------
+function renderTodo(){
+  renderDashboard();
+  renderHoyImc();
+  renderHistorialPreview();
+  renderSemana();
+  renderMes();
+  renderHistorialCompleto();
+  renderMeta();
+}
+
+// ---------- Render: Dashboard (Hoy) ----------
+function renderDashboard(){
   document.getElementById('header-date').textContent =
-    `${hoy.getDate()} de ${MESES[hoy.getMonth()]}`;
+    `${new Date().getDate()} de ${MESES[new Date().getMonth()]}`;
 
-  const fecha = toDateStr(hoy);
-  const pesoHoy = registros[fecha];
-  document.getElementById('input-peso').value = pesoHoy || '';
+  const body = document.getElementById('dashboard-body');
+  const ultimo = ultimoRegistro();
+  if (!ultimo) {
+    body.innerHTML = `<div class="empty-state">Registrá tu primer peso para ver tu resumen.</div>`;
+    return;
+  }
 
+  let html = `<div class="dash-main"><div class="dash-peso">${fmtKg(ultimo.peso)}<span class="u"> kg</span></div></div>`;
+
+  if (metaConfig) {
+    const bajaste = metaConfig.pesoInicial - ultimo.peso;
+    const faltan = ultimo.peso - metaConfig.pesoObjetivo;
+    const rango = metaConfig.pesoInicial - metaConfig.pesoObjetivo;
+    const pct = rango !== 0 ? clamp((bajaste/rango)*100, 0, 100) : 0;
+    html += `<div class="dash-delta ${bajaste>=0?'neg':'pos'}">${bajaste>=0?'-':'+'}${fmtKg(Math.abs(bajaste))} kg desde el inicio</div>`;
+    html += `<div class="progress-bar-track"><div class="progress-bar-fill" style="width:${pct}%"></div></div>`;
+    html += `<div class="dash-grid">
+      <div class="dash-box"><div class="v">${fmtKg(metaConfig.pesoObjetivo)} kg</div><div class="l">Meta</div></div>
+      <div class="dash-box"><div class="v">${faltan>0?fmtKg(faltan):'0'} kg</div><div class="l">Para llegar</div></div>
+      <div class="dash-box"><div class="v">${Math.round(pct)}%</div><div class="l">Completado</div></div>`;
+    if (ultimo.cintura != null) {
+      html += `<div class="dash-box"><div class="v">${ultimo.cintura} cm</div><div class="l">Última cintura</div></div>`;
+    }
+    html += `</div>`;
+  } else {
+    html += `<div class="dash-hint">Definí tu meta en la pestaña Meta para ver tu progreso acá.</div>`;
+    if (ultimo.cintura != null) {
+      html += `<div class="dash-grid"><div class="dash-box"><div class="v">${ultimo.cintura} cm</div><div class="l">Última cintura</div></div></div>`;
+    }
+  }
+
+  html += `<div class="mini-chart-wrap"><canvas id="chart-dashboard"></canvas></div>`;
+  body.innerHTML = html;
+
+  const hoy = new Date();
+  const labels = [], data = [];
+  for (let i = 13; i >= 0; i--) {
+    const d = addDays(hoy, -i);
+    labels.push('');
+    data.push(registros[toDateStr(d)] ? registros[toDateStr(d)].peso : null);
+  }
+  chartDashboard = pintarChart(chartDashboard, 'chart-dashboard', labels, data, true);
+}
+
+// ---------- Render: IMC (Hoy) ----------
+function renderHoyImc(){
+  const ultimo = ultimoRegistro();
   const imcBlock = document.getElementById('imc-block');
-  if (pesoHoy && alturaCm) {
-    const imc = calcularIMC(pesoHoy, alturaCm);
+  if (ultimo && alturaCm) {
+    const imc = calcularIMC(ultimo.peso, alturaCm);
     const cat = categoriaIMC(imc);
     imcBlock.innerHTML = `
       <div class="imc-row">
@@ -520,67 +791,69 @@ function renderHoy(){
   } else if (!alturaCm) {
     imcBlock.innerHTML = `<div class="imc-empty">Configurá tu altura en Ajustes para calcular tu IMC.</div>`;
   } else {
-    imcBlock.innerHTML = `<div class="imc-empty">Registrá tu peso de hoy para ver tu IMC.</div>`;
-  }
-
-  const lista = document.getElementById('historial-lista');
-  const fechas = Object.keys(registros).sort().reverse().slice(0, 7);
-  if (fechas.length === 0) {
-    lista.innerHTML = `<div class="imc-empty">Todavía no hay registros.</div>`;
-  } else {
-    lista.innerHTML = fechas.map(f => {
-      const d = new Date(f + 'T00:00:00');
-      const label = f === fecha ? 'Hoy' : `${DIAS_CORTOS[d.getDay()]} ${d.getDate()}/${d.getMonth()+1}`;
-      return `<div class="history-row"><span class="d">${label}</span><span class="w">${registros[f]} kg</span></div>`;
-    }).join('');
+    imcBlock.innerHTML = `<div class="imc-empty">Registrá tu peso para ver tu IMC.</div>`;
   }
 }
 
-// ---------- Render: Semana ----------
+// ---------- Render: preview últimos registros (Hoy) ----------
+function renderHistorialPreview(){
+  const lista = document.getElementById('historial-lista');
+  const fechas = Object.keys(registros).sort().reverse().slice(0, 5);
+  if (fechas.length === 0) {
+    lista.innerHTML = `<div class="empty-state">Todavía no hay registros.</div>`;
+    return;
+  }
+  const hoyStr = toDateStr(new Date());
+  lista.innerHTML = fechas.map(f => {
+    const d = new Date(f + 'T00:00:00');
+    const label = f === hoyStr ? 'Hoy' : `${DIAS_CORTOS[d.getDay()]} ${d.getDate()}/${d.getMonth()+1}`;
+    const r = registros[f];
+    return `<div class="history-row"><span class="d">${label}</span><span class="w">${fmtKg(r.peso)} kg${r.cintura!=null?` · ${r.cintura} cm`:''}</span></div>`;
+  }).join('');
+}
+
+// ---------- Render: Semana / Mes ----------
 function renderSemana(){
   const hoy = new Date();
-  const labels = [];
-  const data = [];
+  const labels = [], data = [];
   for (let i = 6; i >= 0; i--) {
     const d = addDays(hoy, -i);
     labels.push(DIAS_CORTOS[d.getDay()]);
-    data.push(registros[toDateStr(d)] ?? null);
+    data.push(registros[toDateStr(d)] ? registros[toDateStr(d)].peso : null);
   }
   const valores = data.filter(v => v != null);
-  document.getElementById('semana-min').textContent = valores.length ? Math.min(...valores).toFixed(1) : '--';
-  document.getElementById('semana-max').textContent = valores.length ? Math.max(...valores).toFixed(1) : '--';
-  document.getElementById('semana-prom').textContent = valores.length ? (valores.reduce((a,b)=>a+b,0)/valores.length).toFixed(1) : '--';
-
-  chartSemana = pintarChart(chartSemana, 'chart-semana', labels, data);
+  document.getElementById('semana-min').textContent = valores.length ? fmtKg(Math.min(...valores)) : '--';
+  document.getElementById('semana-max').textContent = valores.length ? fmtKg(Math.max(...valores)) : '--';
+  document.getElementById('semana-prom').textContent = valores.length ? fmtKg(valores.reduce((a,b)=>a+b,0)/valores.length) : '--';
+  chartSemana = pintarChart(chartSemana, 'chart-semana', labels, data, false);
 }
 
-// ---------- Render: Mes ----------
 function renderMes(){
   const hoy = new Date();
-  const labels = [];
-  const data = [];
+  const labels = [], data = [];
   for (let i = 29; i >= 0; i--) {
     const d = addDays(hoy, -i);
     labels.push(String(d.getDate()));
-    data.push(registros[toDateStr(d)] ?? null);
+    data.push(registros[toDateStr(d)] ? registros[toDateStr(d)].peso : null);
   }
   const valores = data.filter(v => v != null);
   const inicio = valores.length ? valores[0] : null;
   const actual = valores.length ? valores[valores.length-1] : null;
-  document.getElementById('mes-inicio').textContent = inicio != null ? inicio.toFixed(1) : '--';
-  document.getElementById('mes-actual').textContent = actual != null ? actual.toFixed(1) : '--';
+  document.getElementById('mes-inicio').textContent = inicio != null ? fmtKg(inicio) : '--';
+  document.getElementById('mes-actual').textContent = actual != null ? fmtKg(actual) : '--';
   if (inicio != null && actual != null) {
     const delta = actual - inicio;
-    document.getElementById('mes-delta').textContent = (delta >= 0 ? '+' : '') + delta.toFixed(1);
+    document.getElementById('mes-delta').textContent = (delta >= 0 ? '+' : '') + fmtKg(delta);
   } else {
     document.getElementById('mes-delta').textContent = '--';
   }
-
-  chartMes = pintarChart(chartMes, 'chart-mes', labels, data);
+  chartMes = pintarChart(chartMes, 'chart-mes', labels, data, false);
 }
 
-function pintarChart(instance, canvasId, labels, data){
-  const ctx = document.getElementById(canvasId).getContext('2d');
+function pintarChart(instance, canvasId, labels, data, minimal){
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return instance;
+  const ctx = canvas.getContext('2d');
   const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
   if (instance) instance.destroy();
   return new Chart(ctx, {
@@ -594,16 +867,16 @@ function pintarChart(instance, canvasId, labels, data){
         fill: true,
         tension: 0.35,
         spanGaps: true,
-        pointRadius: 2,
+        pointRadius: minimal ? 0 : 2,
         pointBackgroundColor: accent,
-        borderWidth: 2.5
+        borderWidth: minimal ? 2 : 2.5
       }]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
       plugins: { legend: { display: false } },
-      scales: {
+      scales: minimal ? { y: { display:false }, x: { display:false } } : {
         y: { grid: { color: 'rgba(128,128,128,0.12)' }, ticks: { color: '#8E8E93', font: { size: 11 } } },
         x: { grid: { display: false }, ticks: { color: '#8E8E93', font: { size: 11 }, maxRotation: 0 } }
       }
@@ -611,7 +884,160 @@ function pintarChart(instance, canvasId, labels, data){
   });
 }
 
-// ---------- Tabs ----------
+// ---------- Progreso: segmentado ----------
+document.querySelectorAll('#progreso-seg .seg-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#progreso-seg .seg-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('#view-progreso .subview').forEach(v => v.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('sub-' + btn.dataset.seg).classList.add('active');
+  });
+});
+
+// ---------- Comparador ----------
+document.getElementById('btn-comparar').addEventListener('click', () => {
+  const fAntes = document.getElementById('comp-antes').value;
+  const fAhora = document.getElementById('comp-ahora').value;
+  const resultado = document.getElementById('comparar-resultado');
+  if (!fAntes || !fAhora) { alert('Elegí ambas fechas.'); return; }
+  const rAntes = registros[fAntes];
+  const rAhora = registros[fAhora];
+  if (!rAntes || !rAhora) {
+    alert('No hay un registro de peso guardado para una de esas fechas.');
+    resultado.hidden = true;
+    return;
+  }
+  const dias = diffDays(new Date(fAntes + 'T00:00:00'), new Date(fAhora + 'T00:00:00'));
+  const deltaPeso = rAhora.peso - rAntes.peso;
+  const deltaCintura = (rAntes.cintura != null && rAhora.cintura != null) ? (rAhora.cintura - rAntes.cintura) : null;
+
+  resultado.hidden = false;
+  resultado.innerHTML = `
+    <div class="compare-grid">
+      <div class="compare-col">
+        <div class="compare-label">ANTES</div>
+        <div class="compare-peso">${fmtKg(rAntes.peso)} kg</div>
+        ${rAntes.cintura!=null?`<div class="compare-cintura">Cintura: ${rAntes.cintura} cm</div>`:''}
+        <div class="compare-fecha">${formatFechaCorta(fAntes)}</div>
+      </div>
+      <div class="compare-col">
+        <div class="compare-label">AHORA</div>
+        <div class="compare-peso">${fmtKg(rAhora.peso)} kg</div>
+        ${rAhora.cintura!=null?`<div class="compare-cintura">Cintura: ${rAhora.cintura} cm</div>`:''}
+        <div class="compare-fecha">${formatFechaCorta(fAhora)}</div>
+      </div>
+    </div>
+    <div class="compare-deltas">
+      <div class="stat-box"><div class="v">${deltaPeso>=0?'+':''}${fmtKg(deltaPeso)}</div><div class="l">Cambio de peso</div></div>
+      ${deltaCintura!=null?`<div class="stat-box"><div class="v">${deltaCintura>=0?'+':''}${deltaCintura} cm</div><div class="l">Cambio de cintura</div></div>`:'<div class="stat-box"><div class="v">--</div><div class="l">Cambio de cintura</div></div>'}
+      <div class="stat-box"><div class="v">${dias}</div><div class="l">Días</div></div>
+    </div>
+  `;
+});
+
+// ---------- Historial completo ----------
+function renderHistorialCompleto(){
+  const cont = document.getElementById('historial-completo-lista');
+  const fechas = Object.keys(registros).sort().reverse();
+  if (fechas.length === 0) {
+    cont.innerHTML = `<div class="empty-state">Todavía no hay registros.</div>`;
+    return;
+  }
+  cont.innerHTML = fechas.map(f => {
+    const r = registros[f];
+    const editing = historialEditando === f;
+    return `
+    <div class="hist-row-wrap">
+      <div class="hist-row" data-action="toggle" data-fecha="${f}">
+        <div class="hist-fecha">${formatFechaCorta(f)}</div>
+        <div class="hist-datos">${fmtKg(r.peso)} kg${r.cintura!=null?` · ${r.cintura} cm`:''}</div>
+        <button class="hist-edit-btn" data-action="toggle" data-fecha="${f}">✎</button>
+      </div>
+      ${editing ? `
+        <div class="hist-edit-panel">
+          <div class="field-row"><label>Peso (kg)</label><input type="number" step="0.1" class="hist-input-peso" value="${r.peso}"></div>
+          <div class="field-row"><label>Cintura (cm)</label><input type="number" step="0.1" class="hist-input-cintura" value="${r.cintura ?? ''}"></div>
+          <div class="hist-edit-actions">
+            <button class="btn-save small" data-action="guardar" data-fecha="${f}">Guardar</button>
+            <button class="btn-danger-outline" data-action="eliminar" data-fecha="${f}">Eliminar</button>
+          </div>
+        </div>
+      ` : ''}
+    </div>`;
+  }).join('');
+}
+
+document.getElementById('historial-completo-lista').addEventListener('click', async (e) => {
+  const btn = e.target.closest('[data-action]');
+  if (!btn) return;
+  const action = btn.dataset.action;
+  const fecha = btn.dataset.fecha;
+
+  if (action === 'toggle') {
+    historialEditando = (historialEditando === fecha) ? null : fecha;
+    renderHistorialCompleto();
+  } else if (action === 'guardar') {
+    const panel = btn.closest('.hist-edit-panel');
+    const peso = parseFloat(panel.querySelector('.hist-input-peso').value);
+    if (!peso || peso <= 0) { alert('El peso es obligatorio.'); return; }
+    const cinturaRaw = panel.querySelector('.hist-input-cintura').value;
+    const cintura = cinturaRaw ? parseFloat(cinturaRaw) : null;
+    await guardarRegistro(fecha, peso, cintura, false);
+    historialEditando = null;
+    renderTodo();
+  } else if (action === 'eliminar') {
+    if (confirm(`¿Eliminar el registro del ${formatFechaCorta(fecha)}?`)) {
+      await eliminarRegistro(fecha);
+      historialEditando = null;
+      renderTodo();
+    }
+  }
+});
+
+// ---------- Meta ----------
+function renderMeta(){
+  if (metaConfig) {
+    document.getElementById('meta-peso-inicial').value = metaConfig.pesoInicial;
+    document.getElementById('meta-fecha-inicio').value = metaConfig.fechaInicio;
+    document.getElementById('meta-peso-objetivo').value = metaConfig.pesoObjetivo;
+    document.getElementById('meta-fecha-objetivo').value = metaConfig.fechaObjetivo;
+  }
+  const resumen = document.getElementById('meta-resumen');
+  const ultimo = ultimoRegistro();
+  if (!metaConfig || !ultimo) {
+    resumen.hidden = true;
+    return;
+  }
+  resumen.hidden = false;
+  const pesoActual = ultimo.peso;
+  const bajaste = metaConfig.pesoInicial - pesoActual;
+  const faltan = pesoActual - metaConfig.pesoObjetivo;
+  const rango = metaConfig.pesoInicial - metaConfig.pesoObjetivo;
+  const pct = rango !== 0 ? clamp((bajaste/rango)*100, 0, 100) : 0;
+  const diasRestantes = diffDays(new Date(), new Date(metaConfig.fechaObjetivo + 'T00:00:00'));
+  const semanasRestantes = diasRestantes / 7;
+  const ritmoNecesario = (diasRestantes > 0 && faltan > 0) ? (faltan / semanasRestantes) : null;
+
+  resumen.innerHTML = `
+    <h2>Tu progreso</h2>
+    <div class="stat-grid" style="grid-template-columns:1fr 1fr;">
+      <div class="stat-box"><div class="v">${fmtKg(metaConfig.pesoInicial)} kg</div><div class="l">Peso inicial</div></div>
+      <div class="stat-box"><div class="v">${fmtKg(pesoActual)} kg</div><div class="l">Peso actual</div></div>
+    </div>
+    <div class="progress-bar-track"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
+    <div class="stat-grid" style="grid-template-columns:1fr 1fr;">
+      <div class="stat-box"><div class="v">${bajaste>=0?fmtKg(bajaste):('+'+fmtKg(Math.abs(bajaste)))} kg</div><div class="l">${bajaste>=0?'Bajaste':'Subiste'}</div></div>
+      <div class="stat-box"><div class="v">${faltan>0?fmtKg(faltan)+' kg':'¡Lograda!'}</div><div class="l">Para llegar</div></div>
+    </div>
+    <div class="stat-grid" style="grid-template-columns:1fr 1fr;margin-top:0;">
+      <div class="stat-box"><div class="v">${Math.round(pct)}%</div><div class="l">Progreso</div></div>
+      <div class="stat-box"><div class="v">${diasRestantes>=0?diasRestantes:'Venció'}</div><div class="l">${diasRestantes>=0?'Días restantes':'hace '+Math.abs(diasRestantes)+' días'}</div></div>
+    </div>
+    ${ritmoNecesario!=null ? `<div class="hint">Ritmo necesario: ~${fmtKg(ritmoNecesario)} kg/semana para llegar a tiempo (solo informativo).</div>` : ''}
+  `;
+}
+
+// ---------- Tabs principales ----------
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -619,7 +1045,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.classList.add('active');
     const view = btn.dataset.view;
     document.getElementById('view-' + view).classList.add('active');
-    const titles = { hoy: 'Hoy', semana: 'Semana', mes: 'Mes', ajustes: 'Ajustes' };
+    const titles = { hoy: 'Hoy', progreso: 'Progreso', historial: 'Historial', meta: 'Meta', ajustes: 'Ajustes' };
     document.getElementById('header-title').textContent = titles[view];
     document.getElementById('header-date').style.display = view === 'hoy' ? '' : 'none';
   });
