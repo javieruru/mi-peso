@@ -216,6 +216,7 @@
       <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92c1.7-1.57 2.68-3.88 2.68-6.62z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.26c-.81.54-1.84.86-3.04.86-2.34 0-4.32-1.58-5.03-3.7H.95v2.33A9 9 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.97 10.72A5.4 5.4 0 0 1 3.68 9c0-.6.1-1.18.29-1.72V4.95H.95A9 9 0 0 0 0 9c0 1.45.35 2.83.95 4.05l3.02-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.51.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0A9 9 0 0 0 .95 4.95l3.02 2.33C4.68 5.16 6.66 3.58 9 3.58z"/></svg>
       Continuar con Google
     </button>
+    <div id="debug-msg" style="font-size:12px;color:var(--text-2);max-width:300px;word-break:break-word;"></div>
   </div>
 
   <!-- ---------- APP ---------- -->
@@ -372,7 +373,9 @@ const DIAS_CORTOS = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
 const MESES = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
 
 // ---------- Auth ----------
+const debugMsg = document.getElementById('debug-msg');
 document.getElementById('btn-login').addEventListener('click', () => {
+  debugMsg.textContent = 'Redirigiendo a Google...';
   signInWithRedirect(auth, provider);
 });
 document.getElementById('btn-logout').addEventListener('click', () => {
@@ -380,10 +383,15 @@ document.getElementById('btn-logout').addEventListener('click', () => {
 });
 
 // Captura el resultado al volver de la pantalla de Google
-getRedirectResult(auth).catch(err => {
-  if (err && err.code !== 'auth/no-auth-event') {
-    alert('No se pudo iniciar sesión: ' + err.message);
+debugMsg.textContent = 'Verificando sesión...';
+getRedirectResult(auth).then(result => {
+  if (result && result.user) {
+    debugMsg.textContent = 'Login OK: ' + result.user.email;
+  } else {
+    debugMsg.textContent = 'Sin resultado de redirect (result vacío).';
   }
+}).catch(err => {
+  debugMsg.textContent = 'Error de redirect: ' + err.code + ' — ' + err.message;
 });
 
 onAuthStateChanged(auth, async (user) => {
@@ -403,6 +411,7 @@ onAuthStateChanged(auth, async (user) => {
     currentUser = null;
     document.getElementById('auth-screen').hidden = false;
     document.getElementById('app').hidden = true;
+    debugMsg.textContent = debugMsg.textContent || 'No hay sesión activa.';
   }
 });
 
