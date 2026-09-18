@@ -310,7 +310,7 @@
 <div id="app-shell">
 
   <!-- ---------- LOGIN ---------- -->
-  <div id="auth-screen">
+  <div id="auth-screen" hidden>
     <div class="mark">
       <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a5 5 0 0 1 5 5c0 3-2 5-2 8h-6c0-3-2-5-2-8a5 5 0 0 1 5-5z"/><path d="M9 19h6M10 22h4"/></svg>
     </div>
@@ -326,7 +326,7 @@
   </div>
 
   <!-- ---------- LOADING ---------- -->
-  <div id="loading-screen" hidden>
+  <div id="loading-screen">
     <div class="mark">
       <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a5 5 0 0 1 5 5c0 3-2 5-2 8h-6c0-3-2-5-2-8a5 5 0 0 1 5-5z"/><path d="M9 19h6M10 22h4"/></svg>
     </div>
@@ -654,10 +654,9 @@ onAuthStateChanged(auth, async (user) => {
     mostrarBienvenida(nombrePerfil || (user.displayName ? user.displayName.split(' ')[0] : ''));
   } else {
     currentUser = null;
-    document.getElementById('auth-screen').hidden = false;
     document.getElementById('loading-screen').hidden = true;
+    document.getElementById('auth-screen').hidden = false;
     document.getElementById('app').hidden = true;
-    debugMsg.textContent = debugMsg.textContent || 'No hay sesión activa.';
   }
 });
 
