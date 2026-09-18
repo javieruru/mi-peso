@@ -185,7 +185,7 @@
   .dash-delta{font-size:14px;font-weight:600;}
   .dash-delta.neg{color:var(--ok);}
   .dash-delta.pos{color:var(--danger);}
-  .dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0;}
+  .dash-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:14px 0;}
   .dash-box{background:rgba(120,120,128,0.08);border-radius:var(--radius-sm);padding:12px;}
   .dash-box .v{font-size:18px;font-weight:700;}
   .dash-box .l{font-size:11px;color:var(--text-2);margin-top:2px;}
@@ -356,6 +356,25 @@
         <div class="card" id="dashboard-card">
           <h2>Resumen</h2>
           <div id="dashboard-body"></div>
+        </div>
+
+        <div class="card">
+          <h2>IMC</h2>
+          <svg viewBox="0 0 200 108" style="width:100%;max-width:280px;display:block;margin:0 auto;">
+            <path d="M10,100 A90,90 0 0 1 18.57,61.68 L50.23,76.58 A55,55 0 0 0 45,100 Z" fill="#0A84FF"/>
+            <path d="M18.57,61.68 A90,90 0 0 1 72.19,14.4 L83,47.69 A55,55 0 0 0 50.23,76.58 Z" fill="#30B355"/>
+            <path d="M72.19,14.4 A90,90 0 0 1 127.81,14.4 L117,47.69 A55,55 0 0 0 83,47.69 Z" fill="#FF9F0A"/>
+            <path d="M127.81,14.4 A90,90 0 0 1 190,100 L155,100 A55,55 0 0 0 117,47.69 Z" fill="#FF3B30"/>
+            <g id="imc-needle-group" transform="rotate(-90 100 100)">
+              <path d="M100,52 L95,100 L105,100 Z" fill="var(--text)"/>
+            </g>
+            <circle cx="100" cy="100" r="9" fill="var(--text)"/>
+          </svg>
+          <div style="text-align:center;">
+            <div id="imc-gauge-value" style="font-size:32px;font-weight:700;letter-spacing:-0.02em;" hidden></div>
+            <div id="imc-gauge-badge" class="imc-badge" style="display:inline-block;margin-top:4px;" hidden></div>
+            <div id="imc-gauge-empty" class="imc-empty"></div>
+          </div>
         </div>
 
         <div class="card">
@@ -815,18 +834,6 @@ function renderTodo(){
 }
 
 // ---------- Render: Dashboard (Hoy) ----------
-function colorImc(cls){
-  return { bajo: 'var(--info)', normal: 'var(--ok)', sobre: 'var(--warn)', obesidad: 'var(--danger)' }[cls];
-}
-function bloqueImc(pesoKg){
-  if (!alturaCm) {
-    return `<div class="dash-box"><div class="v" style="font-size:14px;color:var(--text-2);">Falta altura</div><div class="l">IMC</div></div>`;
-  }
-  const imc = calcularIMC(pesoKg, alturaCm);
-  const cat = categoriaIMC(imc);
-  return `<div class="dash-box"><div class="v" style="color:${colorImc(cat.cls)}">${imc.toFixed(1)}</div><div class="l">IMC · ${cat.label}</div></div>`;
-}
-
 function renderDashboard(){
   document.getElementById('header-date').textContent =
     `${new Date().getDate()} de ${MESES[new Date().getMonth()]}`;
@@ -835,6 +842,7 @@ function renderDashboard(){
   const ultimo = ultimoRegistro();
   if (!ultimo) {
     body.innerHTML = `<div class="empty-state">Registrá tu primer peso para ver tu resumen.</div>`;
+    renderImcGauge();
     return;
   }
 
@@ -851,14 +859,46 @@ function renderDashboard(){
       <div class="dash-box"><div class="v">${fmtKg(metaConfig.pesoObjetivo)} kg</div><div class="l">Meta</div></div>
       <div class="dash-box"><div class="v">${faltan>0?fmtKg(faltan):'0'} kg</div><div class="l">Para llegar</div></div>
       <div class="dash-box"><div class="v">${Math.round(pct)}%</div><div class="l">Completado</div></div>
-      ${bloqueImc(ultimo.peso)}
     </div>`;
   } else {
     html += `<div class="dash-hint">Definí tu meta en la pestaña Meta para ver tu progreso acá.</div>`;
-    html += `<div class="dash-grid">${bloqueImc(ultimo.peso)}</div>`;
   }
 
   body.innerHTML = html;
+  renderImcGauge();
+}
+
+// ---------- Render: medidor de IMC (aguja) ----------
+function renderImcGauge(){
+  const ultimo = ultimoRegistro();
+  const needleGroup = document.getElementById('imc-needle-group');
+  const valueEl = document.getElementById('imc-gauge-value');
+  const badgeEl = document.getElementById('imc-gauge-badge');
+  const emptyEl = document.getElementById('imc-gauge-empty');
+
+  if (!ultimo || !alturaCm) {
+    needleGroup.setAttribute('transform', 'rotate(-90 100 100)');
+    valueEl.hidden = true;
+    badgeEl.hidden = true;
+    emptyEl.hidden = false;
+    emptyEl.textContent = !alturaCm
+      ? 'Configurá tu altura en Ajustes para calcular tu IMC.'
+      : 'Registrá tu peso para ver tu IMC.';
+    return;
+  }
+
+  const imc = calcularIMC(ultimo.peso, alturaCm);
+  const cat = categoriaIMC(imc);
+  const clamped = clamp(imc, 15, 40);
+  const rotacion = (clamped - 15) * 7.2 - 90;
+
+  needleGroup.setAttribute('transform', `rotate(${rotacion} 100 100)`);
+  valueEl.hidden = false;
+  badgeEl.hidden = false;
+  emptyEl.hidden = true;
+  valueEl.textContent = imc.toFixed(1);
+  badgeEl.textContent = cat.label;
+  badgeEl.className = 'imc-badge ' + cat.cls;
 }
 
 // ---------- Render: preview últimos registros (Hoy) ----------
