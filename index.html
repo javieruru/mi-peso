@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
 <meta name="theme-color" content="#F2F2F7">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Mi Peso">
@@ -333,7 +334,7 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
 import {
-  getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged
+  getAuth, GoogleAuthProvider, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 import {
   getFirestore, doc, setDoc, getDoc, collection, getDocs
@@ -372,10 +373,17 @@ const MESES = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov'
 
 // ---------- Auth ----------
 document.getElementById('btn-login').addEventListener('click', () => {
-  signInWithPopup(auth, provider).catch(err => alert('No se pudo iniciar sesión: ' + err.message));
+  signInWithRedirect(auth, provider);
 });
 document.getElementById('btn-logout').addEventListener('click', () => {
   signOut(auth);
+});
+
+// Captura el resultado al volver de la pantalla de Google
+getRedirectResult(auth).catch(err => {
+  if (err && err.code !== 'auth/no-auth-event') {
+    alert('No se pudo iniciar sesión: ' + err.message);
+  }
 });
 
 onAuthStateChanged(auth, async (user) => {
