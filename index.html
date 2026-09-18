@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
-<meta name="theme-color" content="#F2F2F7">
+<meta name="theme-color" id="meta-theme-color" content="#F2F2F7">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -570,6 +570,13 @@ function ultimoRegistro(){
 }
 
 // ---------- Tema (claro/oscuro/sistema) ----------
+const mqDark = window.matchMedia('(prefers-color-scheme: dark)');
+function actualizarThemeColorMeta(){
+  const esOscuro = temaPref === 'dark' || (temaPref === 'system' && mqDark.matches);
+  document.getElementById('meta-theme-color').setAttribute('content', esOscuro ? '#000000' : '#F2F2F7');
+}
+mqDark.addEventListener('change', () => { if (temaPref === 'system') actualizarThemeColorMeta(); });
+
 function aplicarTema(tema){
   temaPref = tema;
   if (tema === 'system') {
@@ -580,6 +587,7 @@ function aplicarTema(tema){
   document.querySelectorAll('#tema-seg .seg-btn').forEach(b => {
     b.classList.toggle('active', b.dataset.tema === tema);
   });
+  actualizarThemeColorMeta();
 }
 document.querySelectorAll('#tema-seg .seg-btn').forEach(btn => {
   btn.addEventListener('click', async () => {
@@ -799,6 +807,7 @@ function categoriaIMC(imc){
 function renderTodo(){
   renderDashboard();
   renderHistorialPreview();
+  restaurarRangoLocal();
   renderEvolucion();
   renderComparadorSelects();
   renderHistorialCompleto();
@@ -894,6 +903,32 @@ function calcularRangoFechas(rango){
   return { desde, hasta: hoy };
 }
 
+function guardarRangoLocal(){
+  try {
+    localStorage.setItem('mipeso_rango', JSON.stringify({
+      rango: rangoActual,
+      desde: document.getElementById('input-rango-desde').value
+    }));
+  } catch (e) {}
+}
+function restaurarRangoLocal(){
+  let guardado = null;
+  try {
+    guardado = JSON.parse(localStorage.getItem('mipeso_rango'));
+  } catch (e) {}
+  if (!guardado || !guardado.rango) return;
+  rangoActual = guardado.rango;
+  document.querySelectorAll('#range-chips .chip').forEach(c => {
+    c.classList.toggle('active', c.dataset.rango === rangoActual);
+  });
+  const picker = document.getElementById('rango-personalizado-picker');
+  picker.hidden = rangoActual !== 'personalizado';
+  if (rangoActual === 'personalizado' && guardado.desde) {
+    document.getElementById('input-rango-desde').value = guardado.desde;
+    document.getElementById('input-rango-desde').max = toDateStr(new Date());
+  }
+}
+
 document.querySelectorAll('#range-chips .chip').forEach(chip => {
   chip.addEventListener('click', () => {
     document.querySelectorAll('#range-chips .chip').forEach(c => c.classList.remove('active'));
@@ -906,10 +941,14 @@ document.querySelectorAll('#range-chips .chip').forEach(chip => {
       inp.max = toDateStr(new Date());
       if (!inp.value) inp.value = toDateStr(addDays(new Date(), -29));
     }
+    guardarRangoLocal();
     renderEvolucion();
   });
 });
-document.getElementById('input-rango-desde').addEventListener('change', renderEvolucion);
+document.getElementById('input-rango-desde').addEventListener('change', () => {
+  guardarRangoLocal();
+  renderEvolucion();
+});
 
 function renderEvolucion(){
   document.getElementById('evolucion-titulo').textContent = tituloRango(rangoActual);
