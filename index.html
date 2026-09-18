@@ -154,7 +154,6 @@
   .dash-box .v{font-size:18px;font-weight:700;}
   .dash-box .l{font-size:11px;color:var(--text-2);margin-top:2px;}
   .dash-hint{font-size:13px;color:var(--text-2);}
-  .mini-chart-wrap{position:relative;height:90px;margin-top:10px;}
 
   /* Progress bar */
   .progress-bar-track{height:10px;background:rgba(120,120,128,0.16);border-radius:999px;overflow:hidden;margin:10px 0;}
@@ -327,13 +326,6 @@
         </div>
 
         <div class="card">
-          <h2>IMC</h2>
-          <div id="imc-block">
-            <div class="imc-empty">Configurá tu altura en Ajustes para calcular tu IMC.</div>
-          </div>
-        </div>
-
-        <div class="card">
           <h2>Últimos registros</h2>
           <div id="historial-lista"><div class="empty-state">Todavía no hay registros.</div></div>
         </div>
@@ -490,7 +482,6 @@ let nombrePerfil = '';
 let metaConfig = null;    // { pesoInicial, fechaInicio, pesoObjetivo, fechaObjetivo }
 let chartSemana = null;
 let chartMes = null;
-let chartDashboard = null;
 let historialEditando = null;
 let welcomeShown = false;
 
@@ -617,7 +608,6 @@ document.getElementById('input-altura').addEventListener('change', async (e) => 
   alturaCm = val;
   await guardarPerfilCampo('alturaCm', val);
   renderDashboard();
-  renderHoyImc();
 });
 document.getElementById('input-nombre').addEventListener('change', async (e) => {
   const val = e.target.value.trim();
@@ -719,7 +709,6 @@ function categoriaIMC(imc){
 // ---------- Render: todo ----------
 function renderTodo(){
   renderDashboard();
-  renderHoyImc();
   renderHistorialPreview();
   renderSemana();
   renderMes();
@@ -728,6 +717,18 @@ function renderTodo(){
 }
 
 // ---------- Render: Dashboard (Hoy) ----------
+function colorImc(cls){
+  return { bajo: 'var(--info)', normal: 'var(--ok)', sobre: 'var(--warn)', obesidad: 'var(--danger)' }[cls];
+}
+function bloqueImc(pesoKg){
+  if (!alturaCm) {
+    return `<div class="dash-box"><div class="v" style="font-size:14px;color:var(--text-2);">Falta altura</div><div class="l">IMC</div></div>`;
+  }
+  const imc = calcularIMC(pesoKg, alturaCm);
+  const cat = categoriaIMC(imc);
+  return `<div class="dash-box"><div class="v" style="color:${colorImc(cat.cls)}">${imc.toFixed(1)}</div><div class="l">IMC · ${cat.label}</div></div>`;
+}
+
 function renderDashboard(){
   document.getElementById('header-date').textContent =
     `${new Date().getDate()} de ${MESES[new Date().getMonth()]}`;
@@ -751,48 +752,15 @@ function renderDashboard(){
     html += `<div class="dash-grid">
       <div class="dash-box"><div class="v">${fmtKg(metaConfig.pesoObjetivo)} kg</div><div class="l">Meta</div></div>
       <div class="dash-box"><div class="v">${faltan>0?fmtKg(faltan):'0'} kg</div><div class="l">Para llegar</div></div>
-      <div class="dash-box"><div class="v">${Math.round(pct)}%</div><div class="l">Completado</div></div>`;
-    if (ultimo.cintura != null) {
-      html += `<div class="dash-box"><div class="v">${ultimo.cintura} cm</div><div class="l">Última cintura</div></div>`;
-    }
-    html += `</div>`;
+      <div class="dash-box"><div class="v">${Math.round(pct)}%</div><div class="l">Completado</div></div>
+      ${bloqueImc(ultimo.peso)}
+    </div>`;
   } else {
     html += `<div class="dash-hint">Definí tu meta en la pestaña Meta para ver tu progreso acá.</div>`;
-    if (ultimo.cintura != null) {
-      html += `<div class="dash-grid"><div class="dash-box"><div class="v">${ultimo.cintura} cm</div><div class="l">Última cintura</div></div></div>`;
-    }
+    html += `<div class="dash-grid">${bloqueImc(ultimo.peso)}</div>`;
   }
 
-  html += `<div class="mini-chart-wrap"><canvas id="chart-dashboard"></canvas></div>`;
   body.innerHTML = html;
-
-  const hoy = new Date();
-  const labels = [], data = [];
-  for (let i = 13; i >= 0; i--) {
-    const d = addDays(hoy, -i);
-    labels.push('');
-    data.push(registros[toDateStr(d)] ? registros[toDateStr(d)].peso : null);
-  }
-  chartDashboard = pintarChart(chartDashboard, 'chart-dashboard', labels, data, true);
-}
-
-// ---------- Render: IMC (Hoy) ----------
-function renderHoyImc(){
-  const ultimo = ultimoRegistro();
-  const imcBlock = document.getElementById('imc-block');
-  if (ultimo && alturaCm) {
-    const imc = calcularIMC(ultimo.peso, alturaCm);
-    const cat = categoriaIMC(imc);
-    imcBlock.innerHTML = `
-      <div class="imc-row">
-        <div class="imc-value">${imc.toFixed(1)}</div>
-        <div class="imc-badge ${cat.cls}">${cat.label}</div>
-      </div>`;
-  } else if (!alturaCm) {
-    imcBlock.innerHTML = `<div class="imc-empty">Configurá tu altura en Ajustes para calcular tu IMC.</div>`;
-  } else {
-    imcBlock.innerHTML = `<div class="imc-empty">Registrá tu peso para ver tu IMC.</div>`;
-  }
 }
 
 // ---------- Render: preview últimos registros (Hoy) ----------
