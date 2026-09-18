@@ -133,6 +133,18 @@
     text-shadow:0 2px 20px rgba(0,0,0,0.25);
   }
 
+  /* Meta modal */
+  #meta-modal{
+    position:fixed;inset:0;z-index:90;
+    background:rgba(0,0,0,0.5);
+    display:flex;align-items:center;justify-content:center;padding:28px;
+  }
+  .modal-card{
+    background:var(--surface);border-radius:var(--radius);
+    padding:28px 24px;text-align:center;max-width:300px;box-shadow:var(--shadow);
+    animation:fade .25s ease;
+  }
+
   /* ---------- App layout ---------- */
   #app{flex:1;display:flex;flex-direction:column;min-height:100dvh;}
   header.topbar{
@@ -336,6 +348,16 @@
   <!-- ---------- WELCOME OVERLAY ---------- -->
   <div id="welcome-overlay" hidden>
     <div id="welcome-text">Hola</div>
+  </div>
+
+  <!-- ---------- META ALCANZADA ---------- -->
+  <div id="meta-modal" hidden>
+    <div class="modal-card">
+      <div style="font-size:44px;line-height:1;">🎉</div>
+      <h2 style="font-size:20px;margin:12px 0 6px;font-weight:700;">¡Felicitaciones!</h2>
+      <p id="meta-modal-text" style="color:var(--text-2);font-size:14px;margin:0 0 18px;"></p>
+      <button class="btn-save" id="btn-cerrar-meta-modal" style="margin-top:0;">Cerrar</button>
+    </div>
   </div>
 
   <!-- ---------- APP ---------- -->
@@ -744,11 +766,35 @@ document.getElementById('btn-guardar-meta').addEventListener('click', async () =
     alert('Completá los 4 campos para definir la meta.');
     return;
   }
-  metaConfig = { pesoInicial, fechaInicio, pesoObjetivo, fechaObjetivo };
+  metaConfig = { pesoInicial, fechaInicio, pesoObjetivo, fechaObjetivo, logrado: false };
   const ref = doc(db, 'pesos', currentUser.uid, 'config', 'meta');
   await setDoc(ref, metaConfig);
   renderMeta();
   renderDashboard();
+  renderEvolucion();
+  chequearCelebracionMeta();
+});
+
+// ---------- Meta alcanzada: felicitación ----------
+function metaFueAlcanzada(){
+  if (!metaConfig) return false;
+  const ultimo = ultimoRegistro();
+  if (!ultimo) return false;
+  const bajando = metaConfig.pesoInicial > metaConfig.pesoObjetivo;
+  return bajando ? ultimo.peso <= metaConfig.pesoObjetivo : ultimo.peso >= metaConfig.pesoObjetivo;
+}
+async function chequearCelebracionMeta(){
+  if (!metaConfig || metaConfig.logrado) return;
+  if (!metaFueAlcanzada()) return;
+  metaConfig.logrado = true;
+  const ref = doc(db, 'pesos', currentUser.uid, 'config', 'meta');
+  await setDoc(ref, metaConfig);
+  document.getElementById('meta-modal-text').textContent =
+    `Llegaste a tu meta de ${fmtKg(metaConfig.pesoObjetivo)} kg. ¡Bien ahí!`;
+  document.getElementById('meta-modal').hidden = false;
+}
+document.getElementById('btn-cerrar-meta-modal').addEventListener('click', () => {
+  document.getElementById('meta-modal').hidden = true;
 });
 
 // ---------- Firestore: registros ----------
@@ -802,6 +848,7 @@ document.getElementById('btn-guardar-peso').addEventListener('click', async () =
       hint.hidden = false;
       setTimeout(() => hint.hidden = true, 1800);
       renderTodo();
+      await chequearCelebracionMeta();
     }
   } catch (err) {
     alert('No se pudo guardar: ' + err.message);
@@ -1004,31 +1051,40 @@ function renderEvolucion(){
   document.getElementById('evo-min').textContent = valores.length ? fmtKg(Math.min(...valores)) : '--';
   document.getElementById('evo-max').textContent = valores.length ? fmtKg(Math.max(...valores)) : '--';
   document.getElementById('evo-prom').textContent = valores.length ? fmtKg(valores.reduce((a,b)=>a+b,0)/valores.length) : '--';
-  chartEvolucion = pintarChart(chartEvolucion, 'chart-evolucion', labels, data);
+  chartEvolucion = pintarChart(chartEvolucion, 'chart-evolucion', labels, data, metaConfig ? metaConfig.pesoObjetivo : null);
 }
 
-function pintarChart(instance, canvasId, labels, data){
+function pintarChart(instance, canvasId, labels, data, metaValue){
   const canvas = document.getElementById(canvasId);
   if (!canvas) return instance;
   const ctx = canvas.getContext('2d');
   const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
   if (instance) instance.destroy();
+  const datasets = [{
+    data,
+    borderColor: accent,
+    backgroundColor: accent + '22',
+    fill: true,
+    tension: 0.35,
+    spanGaps: true,
+    pointRadius: labels.length > 40 ? 0 : 2,
+    pointBackgroundColor: accent,
+    borderWidth: 2.5
+  }];
+  if (metaValue != null) {
+    datasets.push({
+      data: labels.map(() => metaValue),
+      borderColor: '#30B355',
+      borderDash: [6, 4],
+      borderWidth: 2,
+      pointRadius: 0,
+      fill: false,
+      tension: 0
+    });
+  }
   return new Chart(ctx, {
     type: 'line',
-    data: {
-      labels,
-      datasets: [{
-        data,
-        borderColor: accent,
-        backgroundColor: accent + '22',
-        fill: true,
-        tension: 0.35,
-        spanGaps: true,
-        pointRadius: labels.length > 40 ? 0 : 2,
-        pointBackgroundColor: accent,
-        borderWidth: 2.5
-      }]
-    },
+    data: { labels, datasets },
     options: {
       responsive: true,
       maintainAspectRatio: false,
@@ -1157,6 +1213,7 @@ document.getElementById('historial-completo-lista').addEventListener('click', as
     await guardarRegistro(fecha, peso, cintura, nota, false);
     historialEditando = null;
     renderTodo();
+    await chequearCelebracionMeta();
   } else if (action === 'eliminar') {
     if (confirm(`¿Eliminar el registro del ${formatFechaCorta(fecha)}?`)) {
       await eliminarRegistro(fecha);
