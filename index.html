@@ -1610,11 +1610,13 @@ function renderDiaEntreno(){
   const f = entrenoDiaSel;
   const dObj = new Date(f + 'T00:00:00');
   const esHoy = f === toDateStr(new Date());
-  document.getElementById('entreno-dia-titulo').textContent = esHoy ? 'Hoy' : DIAS_LARGOS[dObj.getDay()];
-  document.getElementById('entreno-dia-sub').textContent = `${DIAS_LARGOS[dObj.getDay()]} ${dObj.getDate()} de ${MESES[dObj.getMonth()]}`;
-
   const datos = entrenoData[f] || { notaDia: '', ejercicios: [] };
   const ejercicios = datos.ejercicios || [];
+
+  document.getElementById('entreno-dia-titulo').textContent = esHoy ? 'Hoy' : DIAS_LARGOS[dObj.getDay()];
+  const horaTxt = datos.horaEntreno ? ` · ${datos.horaEntreno}hs` : '';
+  document.getElementById('entreno-dia-sub').textContent = `${DIAS_LARGOS[dObj.getDay()]} ${dObj.getDate()} de ${MESES[dObj.getMonth()]}${horaTxt}`;
+
   const badge = document.getElementById('entreno-badge');
   if (ejercicios.length > 0) {
     const hechos = ejercicios.filter(e => e.hecho).length;
@@ -1634,8 +1636,12 @@ function renderDiaEntreno(){
     lista.innerHTML = ejercicios.map(ej => {
       const editando = entrenoEditandoId === ej.id;
       const unidadReps = ej.tipoMedida === 'tiempo' ? ' min' : '';
-      const numeroBase = (ej.series && ej.series > 0) ? `${ej.series}×${ej.reps || 0}` : `${ej.reps || 0}`;
-      const detalle = `${numeroBase}${unidadReps}${ej.peso ? ' | ' + ej.peso + ' kg' : ''}`;
+      const tieneNumero = (ej.series && ej.series > 0) || (ej.reps && ej.reps > 0);
+      const numeroBase = tieneNumero
+        ? ((ej.series && ej.series > 0) ? `${ej.series}×${ej.reps || 0}${unidadReps}` : `${ej.reps}${unidadReps}`)
+        : '';
+      const partesDetalle = [numeroBase, ej.peso ? ej.peso + ' kg' : ''].filter(Boolean);
+      const detalle = partesDetalle.join(' | ');
       return `
       <div class="ej-row-wrap">
         <div class="ej-row" style="border-left-color:${ej.color}" data-action="toggle-edit" data-id="${ej.id}">
@@ -1644,7 +1650,7 @@ function renderDiaEntreno(){
           </div>
           <div class="ej-info">
             <div class="t">${ej.titulo}</div>
-            <div class="d">${detalle}</div>
+            ${detalle ? `<div class="d">${detalle}</div>` : ''}
             ${ej.nota ? `<div class="n">${ej.nota}</div>` : ''}
           </div>
           <div class="ej-check ${ej.hecho ? 'hecho' : ''}" data-action="toggle-hecho" data-id="${ej.id}">
@@ -1979,13 +1985,18 @@ function renderReporteLista(){
     const detalle = abierto ? ejercicios.map(ej => {
       const est = iconoEstadoEjercicio(ej.hecho, f);
       const unidadReps = ej.tipoMedida === 'tiempo' ? ' min' : '';
-      const numeroBase = (ej.series && ej.series > 0) ? `${ej.series}×${ej.reps || 0}` : `${ej.reps || 0}`;
+      const tieneNumero = (ej.series && ej.series > 0) || (ej.reps && ej.reps > 0);
+      const numeroBase = tieneNumero
+        ? ((ej.series && ej.series > 0) ? `${ej.series}×${ej.reps || 0}${unidadReps}` : `${ej.reps}${unidadReps}`)
+        : '';
+      const partesDetalle = [numeroBase, ej.peso ? ej.peso + ' kg' : ''].filter(Boolean);
+      const detalleTxt = partesDetalle.join(' | ');
       return `
         <div class="rep-ej-row">
           <div class="rep-ej-estado" style="background:${est.bg}"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">${est.svg}</svg></div>
           <div class="rep-ej-info">
             <div class="t">${ej.titulo}</div>
-            <div class="d">${numeroBase}${unidadReps}${ej.peso ? ' | ' + ej.peso + ' kg' : ''}</div>
+            ${detalleTxt ? `<div class="d">${detalleTxt}</div>` : ''}
           </div>
           <div class="rep-ej-nota">${ej.nota ? ej.nota : (ej.hecho ? '' : 'Pendiente')}</div>
         </div>`;
