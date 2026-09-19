@@ -131,6 +131,11 @@
   #welcome-text{
     font-size:32px;font-weight:700;color:#fff;letter-spacing:-0.02em;
     text-shadow:0 2px 20px rgba(0,0,0,0.25);
+    text-align:center;
+  }
+  #welcome-frase{
+    font-size:16px;font-weight:500;color:rgba(255,255,255,0.85);margin-top:8px;
+    text-shadow:0 2px 12px rgba(0,0,0,0.25);
   }
 
   /* Meta modal */
@@ -451,7 +456,10 @@
 
   <!-- ---------- WELCOME OVERLAY ---------- -->
   <div id="welcome-overlay" hidden>
-    <div id="welcome-text">Hola</div>
+    <div>
+      <div id="welcome-text">Hola</div>
+      <div id="welcome-frase"></div>
+    </div>
   </div>
 
   <!-- ---------- META ALCANZADA ---------- -->
@@ -916,14 +924,36 @@ onAuthStateChanged(auth, async (user) => {
   }
 });
 
+const FRASES_MOTIVACION = [
+  'Hoy se puede 💪🏽','Un día más, un paso más cerca','Vamos con todo hoy','Cada registro cuenta',
+  'La constancia le gana al talento','Hoy es un buen día para sumar','Pequeños pasos, grandes cambios',
+  'Seguí así, vas bien','No hay prisa, pero tampoco pausa','Hoy toca cuidarte un poco más',
+  'El esfuerzo de hoy se nota mañana','Arriba ese ánimo 🔥','Un registro más, un hábito más fuerte',
+  'Hoy es tu día','La disciplina te va a sorprender','Todo suma, hasta lo chico','Vas por buen camino',
+  'Hoy, mejor que ayer','A darle con ganas','El progreso se construye de a poco',
+  'Cuidarte también es ganar','Hoy es una buena oportunidad para avanzar','Seguí sumando días',
+  'La racha se cuida de a un día','Fuerza y constancia 💪🏽','Hoy también cuenta',
+  'Un poco cada día alcanza','Bien ahí, seguí','Vale la pena el esfuerzo',
+  'Hoy podés sumar un ladrillo más','Tu yo del futuro te va a agradecer esto',
+  'Vamos de a poco, pero sin parar','Hoy es momento de cuidarte','Un día a la vez',
+  'Se nota el esfuerzo','Dale para adelante','Hoy también se puede',
+  'El hábito se construye hoy, no mañana','Con calma pero sin aflojar','Vas a estar orgulloso de esto',
+  'Hoy suma, aunque no lo sientas','A seguir con la buena racha','Un esfuerzo más, un logro más',
+  'Hoy es un buen día para no bajar los brazos','Seguí confiando en el proceso',
+  'Cada día que registrás, ganás','El camino se hace caminando','Hoy, con toda la energía',
+  'No aflojes justo ahora','Vamos que se puede 💪🏽'
+];
+
 function mostrarBienvenida(nombre){
   if (welcomeShown) return;
   welcomeShown = true;
   const overlay = document.getElementById('welcome-overlay');
   document.getElementById('welcome-text').textContent = 'Hola' + (nombre ? ' ' + nombre : '');
+  document.getElementById('welcome-frase').textContent =
+    FRASES_MOTIVACION[Math.floor(Math.random() * FRASES_MOTIVACION.length)];
   overlay.hidden = false;
-  setTimeout(() => overlay.classList.add('hide'), 1200);
-  setTimeout(() => { overlay.hidden = true; }, 1850);
+  setTimeout(() => overlay.classList.add('hide'), 1800);
+  setTimeout(() => { overlay.hidden = true; }, 2450);
 }
 
 // ---------- Firestore: perfil (altura + nombre + tema) ----------
