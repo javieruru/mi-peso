@@ -150,6 +150,31 @@
     animation:fade .25s ease;
   }
 
+  /* Confirm modal */
+  #confirm-modal{
+    position:fixed;inset:0;z-index:95;
+    background:rgba(0,0,0,0.5);
+    display:flex;align-items:center;justify-content:center;padding:28px;
+  }
+  #confirm-modal .modal-card{text-align:left;max-width:320px;width:100%;}
+  #confirm-modal-text{font-size:15px;line-height:1.4;margin:0 0 20px;color:var(--text);}
+  #confirm-modal .hist-edit-actions{margin-top:0;}
+
+  /* Toast */
+  #toast{
+    position:fixed;left:50%;bottom:96px;
+    transform:translateX(-50%) translateY(16px);
+    background:var(--surface);color:var(--text);
+    padding:12px 18px;border-radius:999px;box-shadow:var(--shadow);
+    font-size:14px;font-weight:600;display:flex;align-items:center;gap:9px;
+    z-index:96;opacity:0;transition:opacity .25s ease, transform .25s ease;
+    max-width:88%;pointer-events:none;
+  }
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  #toast .toast-dot{width:8px;height:8px;border-radius:50%;background:var(--ok);flex-shrink:0;}
+  #toast.error .toast-dot{background:var(--danger);}
+  #toast span.toast-msg{white-space:normal;}
+
   /* ---------- App layout ---------- */
   #app{flex:1;display:flex;flex-direction:column;min-height:100dvh;}
   header.topbar{
@@ -471,6 +496,23 @@
       <p id="meta-modal-text" style="color:var(--text-2);font-size:14px;margin:0 0 18px;"></p>
       <button class="btn-save" id="btn-cerrar-meta-modal" style="margin-top:0;">Cerrar</button>
     </div>
+  </div>
+
+  <!-- ---------- CONFIRMAR ---------- -->
+  <div id="confirm-modal" hidden>
+    <div class="modal-card">
+      <p id="confirm-modal-text"></p>
+      <div class="hist-edit-actions">
+        <button class="btn-danger-outline" id="confirm-modal-cancelar">Cancelar</button>
+        <button class="btn-save small" id="confirm-modal-aceptar">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ---------- TOAST ---------- -->
+  <div id="toast" hidden>
+    <span class="toast-dot"></span>
+    <span class="toast-msg" id="toast-msg"></span>
   </div>
 
   <!-- ---------- APP ---------- -->
@@ -952,6 +994,43 @@ function mostrarBienvenida(nombre){
   setTimeout(() => { overlay.hidden = true; }, 2450);
 }
 
+// ---------- Toast y modal de confirmación (reemplazan alert/confirm) ----------
+let toastTimer = null;
+function mostrarToast(mensaje, tipo){
+  const el = document.getElementById('toast');
+  document.getElementById('toast-msg').textContent = mensaje;
+  el.classList.toggle('error', tipo === 'error');
+  el.hidden = false;
+  requestAnimationFrame(() => el.classList.add('show'));
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => {
+    el.classList.remove('show');
+    setTimeout(() => { el.hidden = true; }, 250);
+  }, 2800);
+}
+
+function mostrarConfirm(mensaje, textoAceptar, textoCancelar){
+  return new Promise(resolve => {
+    const modal = document.getElementById('confirm-modal');
+    const btnAceptar = document.getElementById('confirm-modal-aceptar');
+    const btnCancelar = document.getElementById('confirm-modal-cancelar');
+    document.getElementById('confirm-modal-text').textContent = mensaje;
+    btnAceptar.textContent = textoAceptar || 'Confirmar';
+    btnCancelar.textContent = textoCancelar || 'Cancelar';
+    modal.hidden = false;
+    function cerrar(resultado){
+      modal.hidden = true;
+      btnAceptar.removeEventListener('click', onAceptar);
+      btnCancelar.removeEventListener('click', onCancelar);
+      resolve(resultado);
+    }
+    function onAceptar(){ cerrar(true); }
+    function onCancelar(){ cerrar(false); }
+    btnAceptar.addEventListener('click', onAceptar);
+    btnCancelar.addEventListener('click', onCancelar);
+  });
+}
+
 // ---------- Firestore: perfil (altura + nombre + tema) ----------
 async function cargarPerfil(){
   const ref = doc(db, 'pesos', currentUser.uid, 'config', 'perfil');
@@ -996,7 +1075,7 @@ document.getElementById('btn-guardar-meta').addEventListener('click', async () =
   const pesoObjetivo = parseFloat(document.getElementById('meta-peso-objetivo').value);
   const fechaObjetivo = document.getElementById('meta-fecha-objetivo').value;
   if (!pesoInicial || !fechaInicio || !pesoObjetivo || !fechaObjetivo) {
-    alert('Completá los 4 campos para definir la meta.');
+    mostrarToast('Completá los 4 campos para definir la meta.', 'error');
     return;
   }
   metaConfig = { pesoInicial, fechaInicio, pesoObjetivo, fechaObjetivo, logrado: false };
@@ -1041,7 +1120,7 @@ async function cargarRegistros(){
 async function guardarRegistro(fecha, peso, cintura, nota, avisarSiExiste){
   if (avisarSiExiste && registros[fecha]) {
     const actual = registros[fecha];
-    const ok = confirm(`Ya hay un registro para el ${formatFechaCorta(fecha)} (${fmtKg(actual.peso)} kg). ¿Querés sobrescribirlo?`);
+    const ok = await mostrarConfirm(`Ya hay un registro para el ${formatFechaCorta(fecha)} (${fmtKg(actual.peso)} kg). ¿Querés sobrescribirlo?`, 'Sobrescribir', 'Cancelar');
     if (!ok) return false;
   }
   const ref = doc(db, 'pesos', currentUser.uid, 'registros', fecha);
@@ -1067,7 +1146,7 @@ document.getElementById('input-fecha').addEventListener('change', (e) => {
 document.getElementById('btn-guardar-peso').addEventListener('click', async () => {
   const fecha = document.getElementById('input-fecha').value || toDateStr(new Date());
   const peso = parseFloat(document.getElementById('input-peso').value);
-  if (!peso || peso <= 0) { alert('El peso es obligatorio.'); return; }
+  if (!peso || peso <= 0) { mostrarToast('El peso es obligatorio.', 'error'); return; }
   const cinturaRaw = document.getElementById('input-cintura').value;
   const cintura = cinturaRaw ? parseFloat(cinturaRaw) : null;
   const nota = document.getElementById('input-nota').value.trim();
@@ -1084,7 +1163,7 @@ document.getElementById('btn-guardar-peso').addEventListener('click', async () =
       await chequearCelebracionMeta();
     }
   } catch (err) {
-    alert('No se pudo guardar: ' + err.message);
+    mostrarToast('No se pudo guardar: ' + err.message, 'error');
   } finally {
     btn.disabled = false;
   }
@@ -1359,7 +1438,7 @@ document.getElementById('btn-comparar').addEventListener('click', () => {
   const fAntes = document.getElementById('comp-antes').value;
   const fAhora = document.getElementById('comp-ahora').value;
   const resultado = document.getElementById('comparar-resultado');
-  if (!fAntes || !fAhora) { alert('No hay suficientes registros para comparar.'); return; }
+  if (!fAntes || !fAhora) { mostrarToast('No hay suficientes registros para comparar.', 'error'); return; }
   const rAntes = registros[fAntes];
   const rAhora = registros[fAhora];
 
@@ -1439,7 +1518,7 @@ document.getElementById('historial-completo-lista').addEventListener('click', as
   } else if (action === 'guardar') {
     const panel = btn.closest('.hist-edit-panel');
     const peso = parseFloat(panel.querySelector('.hist-input-peso').value);
-    if (!peso || peso <= 0) { alert('El peso es obligatorio.'); return; }
+    if (!peso || peso <= 0) { mostrarToast('El peso es obligatorio.', 'error'); return; }
     const cinturaRaw = panel.querySelector('.hist-input-cintura').value;
     const cintura = cinturaRaw ? parseFloat(cinturaRaw) : null;
     const nota = panel.querySelector('.hist-input-nota').value.trim();
@@ -1448,7 +1527,7 @@ document.getElementById('historial-completo-lista').addEventListener('click', as
     renderTodo();
     await chequearCelebracionMeta();
   } else if (action === 'eliminar') {
-    if (confirm(`¿Eliminar el registro del ${formatFechaCorta(fecha)}?`)) {
+    if (await mostrarConfirm(`¿Eliminar el registro del ${formatFechaCorta(fecha)}?`, 'Eliminar', 'Cancelar')) {
       await eliminarRegistro(fecha);
       historialEditando = null;
       renderTodo();
@@ -1763,7 +1842,7 @@ document.getElementById('view-entrenamiento').addEventListener('click', async (e
   } else if (action === 'guardar-ejercicio') {
     const panel = btn.closest('.ej-edit-panel, #entreno-form-nuevo');
     const titulo = panel.querySelector('.ej-input-titulo').value.trim();
-    if (!titulo) { alert('El título es obligatorio.'); return; }
+    if (!titulo) { mostrarToast('El título es obligatorio.', 'error'); return; }
     const hora = panel.querySelector('.ej-input-hora').value;
     const series = parseInt(panel.querySelector('.ej-input-series').value) || 0;
     const reps = parseInt(panel.querySelector('.ej-input-reps').value) || 0;
@@ -1786,7 +1865,7 @@ document.getElementById('view-entrenamiento').addEventListener('click', async (e
     renderSemanaEntreno();
     renderDiaEntreno();
   } else if (action === 'eliminar-ejercicio') {
-    if (confirm('¿Eliminar este ejercicio?')) {
+    if (await mostrarConfirm('¿Eliminar este ejercicio?', 'Eliminar', 'Cancelar')) {
       entrenoData[f].ejercicios = entrenoData[f].ejercicios.filter(x => x.id !== id);
       entrenoEditandoId = null;
       await guardarDiaEntreno(f);
@@ -1845,9 +1924,9 @@ document.querySelectorAll('#copy-modo-seg .seg-btn').forEach(btn => {
 });
 
 document.getElementById('btn-confirmar-copiar').addEventListener('click', async () => {
-  if (copyDiasSel.length === 0) { alert('Elegí al menos un día destino.'); return; }
+  if (copyDiasSel.length === 0) { mostrarToast('Elegí al menos un día destino.', 'error'); return; }
   const origen = entrenoData[entrenoDiaSel];
-  if (!origen || origen.ejercicios.length === 0) { alert('Este día no tiene ejercicios para copiar.'); return; }
+  if (!origen || origen.ejercicios.length === 0) { mostrarToast('Este día no tiene ejercicios para copiar.', 'error'); return; }
 
   for (const f of copyDiasSel) {
     if (!entrenoData[f]) {
@@ -1865,7 +1944,7 @@ document.getElementById('btn-confirmar-copiar').addEventListener('click', async 
   document.getElementById('copy-panel-body').hidden = true;
   renderSemanaEntreno();
   renderDiaEntreno();
-  alert('Copiado ✓');
+  mostrarToast('Copiado ✓');
 });
 
 // ---------- Reporte de entrenamiento ----------
@@ -1909,8 +1988,8 @@ async function cargarRangoEntreno(desdeStr, hastaStr){
 document.getElementById('btn-generar-reporte').addEventListener('click', async () => {
   const desdeStr = document.getElementById('reporte-desde').value;
   const hastaStr = document.getElementById('reporte-hasta').value;
-  if (!desdeStr || !hastaStr) { alert('Elegí ambas fechas.'); return; }
-  if (desdeStr > hastaStr) { alert('La fecha "Desde" tiene que ser anterior a "Hasta".'); return; }
+  if (!desdeStr || !hastaStr) { mostrarToast('Elegí ambas fechas.', 'error'); return; }
+  if (desdeStr > hastaStr) { mostrarToast('La fecha "Desde" tiene que ser anterior a "Hasta".', 'error'); return; }
 
   const btn = document.getElementById('btn-generar-reporte');
   btn.disabled = true;
@@ -2056,7 +2135,7 @@ document.getElementById('btn-compartir-reporte').addEventListener('click', async
       await navigator.share({ title: 'Reporte de entrenamientos', text: texto });
     } else {
       await navigator.clipboard.writeText(texto);
-      alert('Reporte copiado al portapapeles.');
+      mostrarToast('Reporte copiado al portapapeles.');
     }
   } catch (e) {}
 });
