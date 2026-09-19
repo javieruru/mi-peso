@@ -315,6 +315,78 @@
   .hint{font-size:13px;color:var(--text-2);text-align:center;margin-top:10px;}
   .empty-state{color:var(--text-2);font-size:14px;text-align:center;padding:12px 0;}
   [hidden]{display:none !important;}
+
+  /* Entrenamiento */
+  .week-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+  .week-nav h2{font-size:17px;font-weight:700;color:var(--text);margin:0;text-transform:capitalize;}
+  .week-nav button{background:none;border:none;color:var(--accent);padding:6px;cursor:pointer;}
+  .week-nav button svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2;}
+  .week-strip{display:flex;justify-content:space-between;gap:2px;}
+  .day-col{
+    flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;
+    padding:6px 0;border-radius:12px;cursor:pointer;background:none;border:none;font-family:inherit;
+  }
+  .day-col .dname{font-size:11px;color:var(--text-2);font-weight:600;}
+  .day-col .dnum{
+    width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-size:14px;font-weight:600;color:var(--text);
+  }
+  .day-col.sel .dnum{background:var(--accent);color:var(--accent-ink);}
+  .day-col .ddot{width:5px;height:5px;border-radius:50%;background:rgba(120,120,128,0.35);}
+  .day-col.tiene .ddot{background:var(--ok);}
+
+  .entreno-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+  .entreno-header h2{font-size:20px;font-weight:700;color:var(--text);margin:0;}
+  .entreno-header .sub{font-size:13px;color:var(--text-2);}
+  .entreno-badge{
+    display:flex;align-items:center;gap:6px;background:rgba(48,179,85,0.14);color:var(--ok);
+    padding:6px 12px;border-radius:999px;font-size:13px;font-weight:700;white-space:nowrap;
+  }
+  .entreno-badge svg{width:16px;height:16px;}
+
+  .ej-row-wrap{border-radius:var(--radius-sm);margin-bottom:10px;overflow:hidden;background:rgba(120,120,128,0.06);}
+  .ej-row{display:flex;align-items:center;gap:12px;padding:12px;cursor:pointer;border-left:4px solid var(--accent);}
+  .ej-icon-circle{
+    width:34px;height:34px;border-radius:50%;flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .ej-icon-circle svg{width:18px;height:18px;stroke-width:2;fill:none;}
+  .ej-info{flex:1;min-width:0;}
+  .ej-info .t{font-size:15px;font-weight:600;}
+  .ej-info .d{font-size:13px;color:var(--text-2);margin-top:1px;}
+  .ej-info .n{font-size:12px;color:var(--text-2);font-style:italic;margin-top:2px;}
+  .ej-check{
+    width:26px;height:26px;border-radius:8px;flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;border:2px solid var(--border);cursor:pointer;
+  }
+  .ej-check.hecho{background:var(--ok);border-color:var(--ok);}
+  .ej-check svg{width:16px;height:16px;stroke:#fff;fill:none;stroke-width:3;display:none;}
+  .ej-check.hecho svg{display:block;}
+  .ej-edit-panel{padding:14px 14px 16px;border-top:1px solid var(--border);}
+
+  .swatch-row{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0;}
+  .swatch{width:30px;height:30px;border-radius:50%;border:2px solid transparent;cursor:pointer;}
+  .swatch.sel{border-color:var(--text);}
+  .icon-pick-row{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 16px;}
+  .icon-pick{
+    width:38px;height:38px;border-radius:10px;background:rgba(120,120,128,0.1);
+    display:flex;align-items:center;justify-content:center;cursor:pointer;border:2px solid transparent;
+  }
+  .icon-pick svg{width:20px;height:20px;stroke:var(--text-2);fill:none;stroke-width:2;}
+  .icon-pick.sel{border-color:var(--accent);background:rgba(94,92,230,0.12);}
+  .icon-pick.sel svg{stroke:var(--accent);}
+
+  .btn-outline{
+    width:100%;background:transparent;border:1.5px dashed var(--accent);color:var(--accent);
+    padding:13px;border-radius:var(--radius-sm);font-size:15px;font-weight:600;cursor:pointer;margin-top:4px;
+  }
+  .copy-panel{margin-top:12px;padding-top:12px;border-top:1px solid var(--border);}
+  .copy-days-row{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0;}
+  .copy-day-chip{
+    padding:7px 11px;border-radius:999px;border:1px solid var(--border);background:transparent;
+    color:var(--text-2);font-size:12px;font-weight:600;cursor:pointer;
+  }
+  .copy-day-chip.sel{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);}
 </style>
 </head>
 <body>
@@ -490,6 +562,55 @@
         <div class="card" id="meta-resumen" hidden></div>
       </section>
 
+      <!-- ENTRENAMIENTO -->
+      <section class="view" id="view-entrenamiento">
+        <div class="card">
+          <div class="week-nav">
+            <button id="btn-semana-prev" aria-label="Semana anterior"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+            <h2 id="entreno-mes-label">Septiembre 2026</h2>
+            <button id="btn-semana-next" aria-label="Semana siguiente"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></button>
+          </div>
+          <div class="week-strip" id="entreno-week-strip"></div>
+        </div>
+
+        <div class="card">
+          <div class="entreno-header">
+            <div>
+              <h2 id="entreno-dia-titulo">Hoy</h2>
+              <div class="sub" id="entreno-dia-sub"></div>
+            </div>
+            <div class="entreno-badge" id="entreno-badge" hidden>
+              <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+              <span id="entreno-badge-text">0 de 0</span>
+            </div>
+          </div>
+
+          <div id="entreno-ejercicios-lista"></div>
+
+          <button class="btn-outline" id="btn-nuevo-ejercicio">+ Agregar ejercicio</button>
+
+          <div id="entreno-form-nuevo" hidden class="ej-edit-panel" style="border-top:none;padding-left:0;padding-right:0;"></div>
+
+          <div class="copy-panel">
+            <button class="btn-outline" id="btn-mostrar-copiar" style="border-style:solid;">Copiar este día a otros días</button>
+            <div id="copy-panel-body" hidden>
+              <div class="hint" style="margin-top:12px;">Elegí los días destino:</div>
+              <div class="copy-days-row" id="copy-days-row"></div>
+              <div class="segmented compact" id="copy-modo-seg">
+                <button class="seg-btn active" data-modo="agregar">Agregar</button>
+                <button class="seg-btn" data-modo="reemplazar">Reemplazar</button>
+              </div>
+              <button class="btn-save" id="btn-confirmar-copiar">Copiar</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Nota del día</h2>
+          <textarea id="entreno-nota-dia" rows="2" placeholder="Opcional" style="width:100%;border:none;background:rgba(120,120,128,0.08);border-radius:12px;padding:12px;font-size:14px;color:var(--text);font-family:inherit;resize:none;"></textarea>
+        </div>
+      </section>
+
       <!-- AJUSTES -->
       <section class="view" id="view-ajustes">
         <div class="card">
@@ -543,6 +664,10 @@
       <button class="tab-btn" data-view="meta">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg>
         <span>Meta</span>
+      </button>
+      <button class="tab-btn" data-view="entrenamiento">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6M7 6.5v11M17 6.5v11M20 9v6M7 12h10"/></svg>
+        <span>Entreno</span>
       </button>
       <button class="tab-btn" data-view="ajustes">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
@@ -1266,6 +1391,342 @@ function renderMeta(){
   `;
 }
 
+// ---------- Entrenamiento ----------
+const ENTRENO_COLORES = ['#FF3B30','#FF9F0A','#FFD60A','#30B355','#0A84FF','#5E5CE6','#FF2D92','#8E8E93'];
+const ENTRENO_ICONOS = {
+  dumbbell: '<path d="M4 9v6M7 6.5v11M17 6.5v11M20 9v6M7 12h10"/>',
+  heart: '<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.29 1.51 4.04 3 5.5l7 7Z"/>',
+  flame: '<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>',
+  activity: '<path d="M22 12h-4l-3 9L9 3l-3 9H2"/>',
+  clock: '<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
+  zap: '<path d="M13 2 3 14h9l-1 8 10-12h-9l1-8Z"/>',
+  star: '<path d="m12 2 3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14 2 9.27l6.91-1.01L12 2Z"/>',
+  circle: '<circle cx="12" cy="12" r="8"/>'
+};
+const DIAS_LARGOS = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+
+let entrenoSemanaInicio = lunesDeSemana(new Date());
+let entrenoDiaSel = toDateStr(new Date());
+let entrenoData = {};
+let entrenoColorSel = ENTRENO_COLORES[0];
+let entrenoIconoSel = 'dumbbell';
+let entrenoEditandoId = null;
+let entrenoFormAbierto = false;
+
+function lunesDeSemana(d){
+  const dia = d.getDay();
+  const offset = dia === 0 ? -6 : 1 - dia;
+  return addDays(d, offset);
+}
+function capitalizar(s){ return s.charAt(0).toUpperCase() + s.slice(1); }
+function generarIdEjercicio(){ return Math.random().toString(36).slice(2, 10); }
+
+async function cargarSemanaEntreno(lunes){
+  const proms = [];
+  for (let i = 0; i < 7; i++) {
+    const f = toDateStr(addDays(lunes, i));
+    if (entrenoData[f]) continue;
+    proms.push(
+      getDoc(doc(db, 'pesos', currentUser.uid, 'entrenamientos', f)).then(snap => {
+        entrenoData[f] = snap.exists() ? snap.data() : { notaDia: '', ejercicios: [] };
+      })
+    );
+  }
+  await Promise.all(proms);
+}
+
+async function guardarDiaEntreno(fecha){
+  const ref = doc(db, 'pesos', currentUser.uid, 'entrenamientos', fecha);
+  await setDoc(ref, entrenoData[fecha]);
+}
+
+async function cargarYRenderizarSemanaEntreno(){
+  await cargarSemanaEntreno(entrenoSemanaInicio);
+  renderSemanaEntreno();
+  renderDiaEntreno();
+}
+
+function renderSemanaEntreno(){
+  const mesLabel = document.getElementById('entreno-mes-label');
+  mesLabel.textContent = `${capitalizar(MESES[entrenoSemanaInicio.getMonth()])} ${entrenoSemanaInicio.getFullYear()}`;
+
+  const strip = document.getElementById('entreno-week-strip');
+  strip.innerHTML = '';
+  for (let i = 0; i < 7; i++) {
+    const d = addDays(entrenoSemanaInicio, i);
+    const f = toDateStr(d);
+    const tiene = entrenoData[f] && entrenoData[f].ejercicios && entrenoData[f].ejercicios.length > 0;
+    const sel = f === entrenoDiaSel;
+    const btn = document.createElement('button');
+    btn.className = 'day-col' + (sel ? ' sel' : '') + (tiene ? ' tiene' : '');
+    btn.dataset.fecha = f;
+    btn.innerHTML = `
+      <div class="dname">${DIAS_CORTOS[d.getDay()]}</div>
+      <div class="dnum">${d.getDate()}</div>
+      <div class="ddot"></div>
+    `;
+    btn.addEventListener('click', () => {
+      entrenoDiaSel = f;
+      renderSemanaEntreno();
+      renderDiaEntreno();
+    });
+    strip.appendChild(btn);
+  }
+}
+
+document.getElementById('btn-semana-prev').addEventListener('click', async () => {
+  const offset = diffDays(entrenoSemanaInicio, new Date(entrenoDiaSel + 'T00:00:00'));
+  entrenoSemanaInicio = addDays(entrenoSemanaInicio, -7);
+  entrenoDiaSel = toDateStr(addDays(entrenoSemanaInicio, offset));
+  await cargarSemanaEntreno(entrenoSemanaInicio);
+  renderSemanaEntreno();
+  renderDiaEntreno();
+});
+document.getElementById('btn-semana-next').addEventListener('click', async () => {
+  const offset = diffDays(entrenoSemanaInicio, new Date(entrenoDiaSel + 'T00:00:00'));
+  entrenoSemanaInicio = addDays(entrenoSemanaInicio, 7);
+  entrenoDiaSel = toDateStr(addDays(entrenoSemanaInicio, offset));
+  await cargarSemanaEntreno(entrenoSemanaInicio);
+  renderSemanaEntreno();
+  renderDiaEntreno();
+});
+
+function renderDiaEntreno(){
+  const f = entrenoDiaSel;
+  const dObj = new Date(f + 'T00:00:00');
+  const esHoy = f === toDateStr(new Date());
+  document.getElementById('entreno-dia-titulo').textContent = esHoy ? 'Hoy' : DIAS_LARGOS[dObj.getDay()];
+  document.getElementById('entreno-dia-sub').textContent = `${DIAS_LARGOS[dObj.getDay()]} ${dObj.getDate()} de ${MESES[dObj.getMonth()]}`;
+
+  const datos = entrenoData[f] || { notaDia: '', ejercicios: [] };
+  const ejercicios = datos.ejercicios || [];
+  const badge = document.getElementById('entreno-badge');
+  if (ejercicios.length > 0) {
+    const hechos = ejercicios.filter(e => e.hecho).length;
+    badge.hidden = false;
+    document.getElementById('entreno-badge-text').textContent = `${hechos} de ${ejercicios.length}`;
+  } else {
+    badge.hidden = true;
+  }
+
+  document.getElementById('entreno-nota-dia').value = datos.notaDia || '';
+
+  const lista = document.getElementById('entreno-ejercicios-lista');
+  if (ejercicios.length === 0) {
+    lista.innerHTML = `<div class="empty-state">Todavía no cargaste ejercicios para este día.</div>`;
+  } else {
+    lista.innerHTML = ejercicios.map(ej => {
+      const editando = entrenoEditandoId === ej.id;
+      const detalle = `${ej.series || 0}×${ej.reps || 0}${ej.peso ? ' | ' + ej.peso + ' kg' : ''}`;
+      return `
+      <div class="ej-row-wrap">
+        <div class="ej-row" style="border-left-color:${ej.color}" data-action="toggle-edit" data-id="${ej.id}">
+          <div class="ej-icon-circle" style="background:${ej.color}22;">
+            <svg viewBox="0 0 24 24" stroke="${ej.color}" stroke-linecap="round" stroke-linejoin="round">${ENTRENO_ICONOS[ej.icono] || ENTRENO_ICONOS.dumbbell}</svg>
+          </div>
+          <div class="ej-info">
+            <div class="t">${ej.titulo}</div>
+            <div class="d">${detalle}</div>
+            ${ej.nota ? `<div class="n">${ej.nota}</div>` : ''}
+          </div>
+          <div class="ej-check ${ej.hecho ? 'hecho' : ''}" data-action="toggle-hecho" data-id="${ej.id}">
+            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+          </div>
+        </div>
+        ${editando ? `<div class="ej-edit-panel" id="ej-form-${ej.id}"></div>` : ''}
+      </div>`;
+    }).join('');
+    if (entrenoEditandoId) {
+      const ejActual = ejercicios.find(e => e.id === entrenoEditandoId);
+      const cont = document.getElementById('ej-form-' + entrenoEditandoId);
+      if (ejActual && cont) cont.innerHTML = formularioEjercicioHTML(ejActual);
+    }
+  }
+
+  document.getElementById('entreno-form-nuevo').hidden = !entrenoFormAbierto;
+  if (entrenoFormAbierto) {
+    document.getElementById('entreno-form-nuevo').innerHTML = formularioEjercicioHTML(null);
+  }
+
+  renderCopyDaysRow();
+}
+
+function formularioEjercicioHTML(ej){
+  const color = ej ? ej.color : entrenoColorSel;
+  const icono = ej ? ej.icono : entrenoIconoSel;
+  const swatches = ENTRENO_COLORES.map(c =>
+    `<button class="swatch ${c === color ? 'sel' : ''}" data-color="${c}" style="background:${c}"></button>`
+  ).join('');
+  const iconos = Object.keys(ENTRENO_ICONOS).map(k =>
+    `<button class="icon-pick ${k === icono ? 'sel' : ''}" data-icono="${k}"><svg viewBox="0 0 24 24" fill="none" stroke-width="2">${ENTRENO_ICONOS[k]}</svg></button>`
+  ).join('');
+  return `
+    <div class="field-row"><label>Título</label><input type="text" class="ej-input-titulo" placeholder="Ej: Pecho - Press" value="${ej ? ej.titulo : ''}"></div>
+    <div class="field-row"><label>Series</label><input type="number" class="ej-input-series" inputmode="numeric" value="${ej ? ej.series || '' : ''}"></div>
+    <div class="field-row"><label>Repeticiones</label><input type="number" class="ej-input-reps" inputmode="numeric" value="${ej ? ej.reps || '' : ''}"></div>
+    <div class="field-row"><label>Peso (kg)</label><input type="number" step="0.5" class="ej-input-peso" inputmode="decimal" placeholder="Opcional" value="${ej && ej.peso ? ej.peso : ''}"></div>
+    <div class="field-row stack"><label>Nota</label><textarea class="ej-input-nota" rows="2">${ej && ej.nota ? ej.nota : ''}</textarea></div>
+    <div class="hint" style="text-align:left;margin-top:10px;">Color</div>
+    <div class="swatch-row">${swatches}</div>
+    <div class="hint" style="text-align:left;">Ícono</div>
+    <div class="icon-pick-row">${iconos}</div>
+    <div class="hist-edit-actions">
+      <button class="btn-save small" data-action="guardar-ejercicio" data-id="${ej ? ej.id : ''}">Guardar</button>
+      ${ej ? `<button class="btn-danger-outline" data-action="eliminar-ejercicio" data-id="${ej.id}">Eliminar</button>`
+           : `<button class="btn-danger-outline" data-action="cancelar-nuevo">Cancelar</button>`}
+    </div>
+  `;
+}
+
+document.getElementById('btn-nuevo-ejercicio').addEventListener('click', () => {
+  entrenoEditandoId = null;
+  entrenoFormAbierto = true;
+  entrenoColorSel = ENTRENO_COLORES[0];
+  entrenoIconoSel = 'dumbbell';
+  renderDiaEntreno();
+});
+
+document.getElementById('view-entrenamiento').addEventListener('click', async (e) => {
+  const swatch = e.target.closest('.swatch');
+  if (swatch) {
+    swatch.parentElement.querySelectorAll('.swatch').forEach(s => s.classList.remove('sel'));
+    swatch.classList.add('sel');
+    entrenoColorSel = swatch.dataset.color;
+    return;
+  }
+  const iconPick = e.target.closest('.icon-pick');
+  if (iconPick) {
+    iconPick.parentElement.querySelectorAll('.icon-pick').forEach(s => s.classList.remove('sel'));
+    iconPick.classList.add('sel');
+    entrenoIconoSel = iconPick.dataset.icono;
+    return;
+  }
+
+  const btn = e.target.closest('[data-action]');
+  if (!btn) return;
+  const action = btn.dataset.action;
+  const id = btn.dataset.id;
+  const f = entrenoDiaSel;
+  if (!entrenoData[f]) entrenoData[f] = { notaDia: '', ejercicios: [] };
+
+  if (action === 'toggle-edit') {
+    entrenoEditandoId = entrenoEditandoId === id ? null : id;
+    entrenoFormAbierto = false;
+    const ej = entrenoData[f].ejercicios.find(x => x.id === id);
+    if (ej) { entrenoColorSel = ej.color; entrenoIconoSel = ej.icono; }
+    renderDiaEntreno();
+  } else if (action === 'toggle-hecho') {
+    e.stopPropagation();
+    const ej = entrenoData[f].ejercicios.find(x => x.id === id);
+    if (ej) {
+      ej.hecho = !ej.hecho;
+      await guardarDiaEntreno(f);
+      renderSemanaEntreno();
+      renderDiaEntreno();
+    }
+  } else if (action === 'guardar-ejercicio') {
+    const panel = btn.closest('.ej-edit-panel, #entreno-form-nuevo');
+    const titulo = panel.querySelector('.ej-input-titulo').value.trim();
+    if (!titulo) { alert('El título es obligatorio.'); return; }
+    const series = parseInt(panel.querySelector('.ej-input-series').value) || 0;
+    const reps = parseInt(panel.querySelector('.ej-input-reps').value) || 0;
+    const pesoRaw = panel.querySelector('.ej-input-peso').value;
+    const peso = pesoRaw ? parseFloat(pesoRaw) : null;
+    const nota = panel.querySelector('.ej-input-nota').value.trim();
+
+    if (id) {
+      const ej = entrenoData[f].ejercicios.find(x => x.id === id);
+      Object.assign(ej, { titulo, series, reps, peso, nota, color: entrenoColorSel, icono: entrenoIconoSel });
+      entrenoEditandoId = null;
+    } else {
+      entrenoData[f].ejercicios.push({
+        id: generarIdEjercicio(), titulo, series, reps, peso, nota,
+        color: entrenoColorSel, icono: entrenoIconoSel, hecho: false
+      });
+      entrenoFormAbierto = false;
+    }
+    await guardarDiaEntreno(f);
+    renderSemanaEntreno();
+    renderDiaEntreno();
+  } else if (action === 'eliminar-ejercicio') {
+    if (confirm('¿Eliminar este ejercicio?')) {
+      entrenoData[f].ejercicios = entrenoData[f].ejercicios.filter(x => x.id !== id);
+      entrenoEditandoId = null;
+      await guardarDiaEntreno(f);
+      renderSemanaEntreno();
+      renderDiaEntreno();
+    }
+  } else if (action === 'cancelar-nuevo') {
+    entrenoFormAbierto = false;
+    renderDiaEntreno();
+  }
+});
+
+document.getElementById('entreno-nota-dia').addEventListener('change', async (e) => {
+  const f = entrenoDiaSel;
+  if (!entrenoData[f]) entrenoData[f] = { notaDia: '', ejercicios: [] };
+  entrenoData[f].notaDia = e.target.value.trim();
+  await guardarDiaEntreno(f);
+});
+
+// ---------- Copiar día a otros días ----------
+let copyDiasSel = [];
+let copyModo = 'agregar';
+
+document.getElementById('btn-mostrar-copiar').addEventListener('click', () => {
+  const panel = document.getElementById('copy-panel-body');
+  panel.hidden = !panel.hidden;
+  if (!panel.hidden) { copyDiasSel = []; renderCopyDaysRow(); }
+});
+
+function renderCopyDaysRow(){
+  const row = document.getElementById('copy-days-row');
+  if (!row) return;
+  row.innerHTML = '';
+  for (let i = 0; i < 7; i++) {
+    const d = addDays(entrenoSemanaInicio, i);
+    const f = toDateStr(d);
+    const chip = document.createElement('button');
+    chip.className = 'copy-day-chip' + (copyDiasSel.includes(f) ? ' sel' : '');
+    chip.textContent = DIAS_CORTOS[d.getDay()] + ' ' + d.getDate();
+    chip.addEventListener('click', () => {
+      if (copyDiasSel.includes(f)) copyDiasSel = copyDiasSel.filter(x => x !== f);
+      else copyDiasSel.push(f);
+      renderCopyDaysRow();
+    });
+    row.appendChild(chip);
+  }
+}
+
+document.querySelectorAll('#copy-modo-seg .seg-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#copy-modo-seg .seg-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    copyModo = btn.dataset.modo;
+  });
+});
+
+document.getElementById('btn-confirmar-copiar').addEventListener('click', async () => {
+  if (copyDiasSel.length === 0) { alert('Elegí al menos un día destino.'); return; }
+  const origen = entrenoData[entrenoDiaSel];
+  if (!origen || origen.ejercicios.length === 0) { alert('Este día no tiene ejercicios para copiar.'); return; }
+
+  for (const f of copyDiasSel) {
+    if (!entrenoData[f]) entrenoData[f] = { notaDia: '', ejercicios: [] };
+    const copia = origen.ejercicios.map(ej => ({ ...ej, id: generarIdEjercicio(), hecho: false }));
+    if (copyModo === 'reemplazar') {
+      entrenoData[f].ejercicios = copia;
+    } else {
+      entrenoData[f].ejercicios = [...(entrenoData[f].ejercicios || []), ...copia];
+    }
+    await guardarDiaEntreno(f);
+  }
+  document.getElementById('copy-panel-body').hidden = true;
+  renderSemanaEntreno();
+  renderDiaEntreno();
+  alert('Copiado ✓');
+});
+
 // ---------- Tabs principales ----------
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -1274,9 +1735,10 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.classList.add('active');
     const view = btn.dataset.view;
     document.getElementById('view-' + view).classList.add('active');
-    const titles = { hoy: 'Hoy', progreso: 'Progreso', historial: 'Historial', meta: 'Meta', ajustes: 'Ajustes' };
+    const titles = { hoy: 'Hoy', progreso: 'Progreso', historial: 'Historial', meta: 'Meta', entrenamiento: 'Entrenamiento', ajustes: 'Ajustes' };
     document.getElementById('header-title').textContent = titles[view];
     document.getElementById('header-date').style.display = view === 'hoy' ? '' : 'none';
+    if (view === 'entrenamiento') cargarYRenderizarSemanaEntreno();
   });
 });
 
