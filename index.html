@@ -654,10 +654,6 @@
         </div>
 
         <div class="card">
-          <div class="field-row"><label>Hora del entrenamiento</label><input type="time" id="entreno-hora"></div>
-        </div>
-
-        <div class="card">
           <h2>Nota del día</h2>
           <textarea id="entreno-nota-dia" rows="2" placeholder="Opcional" style="width:100%;border:none;background:rgba(120,120,128,0.08);border-radius:12px;padding:12px;font-size:14px;color:var(--text);font-family:inherit;resize:none;"></textarea>
         </div>
@@ -1614,8 +1610,7 @@ function renderDiaEntreno(){
   const ejercicios = datos.ejercicios || [];
 
   document.getElementById('entreno-dia-titulo').textContent = esHoy ? 'Hoy' : DIAS_LARGOS[dObj.getDay()];
-  const horaTxt = datos.horaEntreno ? ` · ${datos.horaEntreno}hs` : '';
-  document.getElementById('entreno-dia-sub').textContent = `${DIAS_LARGOS[dObj.getDay()]} ${dObj.getDate()} de ${MESES[dObj.getMonth()]}${horaTxt}`;
+  document.getElementById('entreno-dia-sub').textContent = `${DIAS_LARGOS[dObj.getDay()]} ${dObj.getDate()} de ${MESES[dObj.getMonth()]}`;
 
   const badge = document.getElementById('entreno-badge');
   if (ejercicios.length > 0) {
@@ -1627,7 +1622,6 @@ function renderDiaEntreno(){
   }
 
   document.getElementById('entreno-nota-dia').value = datos.notaDia || '';
-  document.getElementById('entreno-hora').value = datos.horaEntreno || '20:00';
 
   const lista = document.getElementById('entreno-ejercicios-lista');
   if (ejercicios.length === 0) {
@@ -1640,7 +1634,7 @@ function renderDiaEntreno(){
       const numeroBase = tieneNumero
         ? ((ej.series && ej.series > 0) ? `${ej.series}×${ej.reps || 0}${unidadReps}` : `${ej.reps}${unidadReps}`)
         : '';
-      const partesDetalle = [numeroBase, ej.peso ? ej.peso + ' kg' : ''].filter(Boolean);
+      const partesDetalle = [ej.hora ? ej.hora + 'hs' : '', numeroBase, ej.peso ? ej.peso + ' kg' : ''].filter(Boolean);
       const detalle = partesDetalle.join(' | ');
       return `
       <div class="ej-row-wrap">
@@ -1688,6 +1682,7 @@ function formularioEjercicioHTML(ej){
   ).join('');
   return `
     <div class="field-row"><label>Título</label><input type="text" class="ej-input-titulo" placeholder="Ej: Pecho - Press" value="${ej ? ej.titulo : ''}"></div>
+    <div class="field-row"><label>Hora</label><input type="time" class="ej-input-hora" value="${ej && ej.hora ? ej.hora : ''}"></div>
     <div class="field-row"><label>Series</label><input type="number" class="ej-input-series" inputmode="numeric" value="${ej ? ej.series || '' : ''}"></div>
     <div class="segmented compact" data-role="tipo-medida-seg">
       <button class="seg-btn ${tipoMedida === 'reps' ? 'active' : ''}" data-tipo="reps">Repeticiones</button>
@@ -1769,6 +1764,7 @@ document.getElementById('view-entrenamiento').addEventListener('click', async (e
     const panel = btn.closest('.ej-edit-panel, #entreno-form-nuevo');
     const titulo = panel.querySelector('.ej-input-titulo').value.trim();
     if (!titulo) { alert('El título es obligatorio.'); return; }
+    const hora = panel.querySelector('.ej-input-hora').value;
     const series = parseInt(panel.querySelector('.ej-input-series').value) || 0;
     const reps = parseInt(panel.querySelector('.ej-input-reps').value) || 0;
     const pesoRaw = panel.querySelector('.ej-input-peso').value;
@@ -1777,11 +1773,11 @@ document.getElementById('view-entrenamiento').addEventListener('click', async (e
 
     if (id) {
       const ej = entrenoData[f].ejercicios.find(x => x.id === id);
-      Object.assign(ej, { titulo, series, reps, peso, nota, color: entrenoColorSel, icono: entrenoIconoSel, tipoMedida: entrenoTipoMedidaSel });
+      Object.assign(ej, { titulo, hora, series, reps, peso, nota, color: entrenoColorSel, icono: entrenoIconoSel, tipoMedida: entrenoTipoMedidaSel });
       entrenoEditandoId = null;
     } else {
       entrenoData[f].ejercicios.push({
-        id: generarIdEjercicio(), titulo, series, reps, peso, nota,
+        id: generarIdEjercicio(), titulo, hora, series, reps, peso, nota,
         color: entrenoColorSel, icono: entrenoIconoSel, tipoMedida: entrenoTipoMedidaSel, hecho: false
       });
       entrenoFormAbierto = false;
@@ -1807,12 +1803,6 @@ document.getElementById('entreno-nota-dia').addEventListener('change', async (e)
   const f = entrenoDiaSel;
   if (!entrenoData[f]) entrenoData[f] = { notaDia: '', ejercicios: [] };
   entrenoData[f].notaDia = e.target.value.trim();
-  await guardarDiaEntreno(f);
-});
-document.getElementById('entreno-hora').addEventListener('change', async (e) => {
-  const f = entrenoDiaSel;
-  if (!entrenoData[f]) entrenoData[f] = { notaDia: '', ejercicios: [] };
-  entrenoData[f].horaEntreno = e.target.value;
   await guardarDiaEntreno(f);
 });
 
@@ -1989,7 +1979,7 @@ function renderReporteLista(){
       const numeroBase = tieneNumero
         ? ((ej.series && ej.series > 0) ? `${ej.series}×${ej.reps || 0}${unidadReps}` : `${ej.reps}${unidadReps}`)
         : '';
-      const partesDetalle = [numeroBase, ej.peso ? ej.peso + ' kg' : ''].filter(Boolean);
+      const partesDetalle = [ej.hora ? ej.hora + 'hs' : '', numeroBase, ej.peso ? ej.peso + ' kg' : ''].filter(Boolean);
       const detalleTxt = partesDetalle.join(' | ');
       return `
         <div class="rep-ej-row">
