@@ -229,7 +229,7 @@
   }
   .btn-save:active{opacity:.85;}
   .btn-save:disabled{opacity:.45;}
-  .btn-save.small{padding:10px;font-size:14px;flex:1;}
+  .btn-save.small{padding:10px;font-size:14px;flex:1;margin-top:0;width:auto;}
 
   .imc-badge{padding:6px 12px;border-radius:999px;font-size:13px;font-weight:600;}
   .imc-badge.bajo{background:rgba(10,132,255,0.12);color:var(--info);}
@@ -603,6 +603,10 @@
               <button class="btn-save" id="btn-confirmar-copiar">Copiar</button>
             </div>
           </div>
+        </div>
+
+        <div class="card">
+          <div class="field-row"><label>Hora del entrenamiento</label><input type="time" id="entreno-hora"></div>
         </div>
 
         <div class="card">
@@ -1401,7 +1405,9 @@ const ENTRENO_ICONOS = {
   clock: '<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
   zap: '<path d="M13 2 3 14h9l-1 8 10-12h-9l1-8Z"/>',
   star: '<path d="m12 2 3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14 2 9.27l6.91-1.01L12 2Z"/>',
-  circle: '<circle cx="12" cy="12" r="8"/>'
+  circle: '<circle cx="12" cy="12" r="8"/>',
+  bike: '<circle cx="18.5" cy="17.5" r="3.5"/><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="15" cy="5" r="1"/><path d="M12 17.5V14l-3-3 4-3 2 3h2"/>',
+  footprints: '<path d="M4 16v-2.38C4 11.5 2.97 10.5 3 8c.03-2.72 1.49-6 4.5-6C9.37 2 10 3.8 10 5.5c0 3.11-2 5.66-2 8.68V16a2 2 0 1 1-4 0Z"/><path d="M20 20v-2.38c0-2.12 1.03-3.12 1-5.62-.03-2.72-1.49-6-4.5-6C14.63 6 14 7.8 14 9.5c0 3.11 2 5.66 2 8.68V20a2 2 0 1 0 4 0Z"/><path d="M16 17h4"/><path d="M4 13h4"/>'
 };
 const DIAS_LARGOS = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
 
@@ -1410,6 +1416,7 @@ let entrenoDiaSel = toDateStr(new Date());
 let entrenoData = {};
 let entrenoColorSel = ENTRENO_COLORES[0];
 let entrenoIconoSel = 'dumbbell';
+let entrenoTipoMedidaSel = 'reps';
 let entrenoEditandoId = null;
 let entrenoFormAbierto = false;
 
@@ -1510,14 +1517,16 @@ function renderDiaEntreno(){
   }
 
   document.getElementById('entreno-nota-dia').value = datos.notaDia || '';
+  document.getElementById('entreno-hora').value = datos.horaEntreno || '20:00';
 
   const lista = document.getElementById('entreno-ejercicios-lista');
   if (ejercicios.length === 0) {
-    lista.innerHTML = `<div class="empty-state">Todavía no cargaste ejercicios para este día.</div>`;
+    lista.innerHTML = `<div class="empty-state">Día libre 😌</div>`;
   } else {
     lista.innerHTML = ejercicios.map(ej => {
       const editando = entrenoEditandoId === ej.id;
-      const detalle = `${ej.series || 0}×${ej.reps || 0}${ej.peso ? ' | ' + ej.peso + ' kg' : ''}`;
+      const unidadReps = ej.tipoMedida === 'tiempo' ? ' min' : '';
+      const detalle = `${ej.series || 0}×${ej.reps || 0}${unidadReps}${ej.peso ? ' | ' + ej.peso + ' kg' : ''}`;
       return `
       <div class="ej-row-wrap">
         <div class="ej-row" style="border-left-color:${ej.color}" data-action="toggle-edit" data-id="${ej.id}">
@@ -1554,6 +1563,7 @@ function renderDiaEntreno(){
 function formularioEjercicioHTML(ej){
   const color = ej ? ej.color : entrenoColorSel;
   const icono = ej ? ej.icono : entrenoIconoSel;
+  const tipoMedida = ej ? (ej.tipoMedida || 'reps') : entrenoTipoMedidaSel;
   const swatches = ENTRENO_COLORES.map(c =>
     `<button class="swatch ${c === color ? 'sel' : ''}" data-color="${c}" style="background:${c}"></button>`
   ).join('');
@@ -1563,7 +1573,11 @@ function formularioEjercicioHTML(ej){
   return `
     <div class="field-row"><label>Título</label><input type="text" class="ej-input-titulo" placeholder="Ej: Pecho - Press" value="${ej ? ej.titulo : ''}"></div>
     <div class="field-row"><label>Series</label><input type="number" class="ej-input-series" inputmode="numeric" value="${ej ? ej.series || '' : ''}"></div>
-    <div class="field-row"><label>Repeticiones</label><input type="number" class="ej-input-reps" inputmode="numeric" value="${ej ? ej.reps || '' : ''}"></div>
+    <div class="segmented compact" data-role="tipo-medida-seg">
+      <button class="seg-btn ${tipoMedida === 'reps' ? 'active' : ''}" data-tipo="reps">Repeticiones</button>
+      <button class="seg-btn ${tipoMedida === 'tiempo' ? 'active' : ''}" data-tipo="tiempo">Tiempo (min)</button>
+    </div>
+    <div class="field-row"><label>${tipoMedida === 'tiempo' ? 'Minutos' : 'Repeticiones'}</label><input type="number" class="ej-input-reps" inputmode="numeric" value="${ej ? ej.reps || '' : ''}"></div>
     <div class="field-row"><label>Peso (kg)</label><input type="number" step="0.5" class="ej-input-peso" inputmode="decimal" placeholder="Opcional" value="${ej && ej.peso ? ej.peso : ''}"></div>
     <div class="field-row stack"><label>Nota</label><textarea class="ej-input-nota" rows="2">${ej && ej.nota ? ej.nota : ''}</textarea></div>
     <div class="hint" style="text-align:left;margin-top:10px;">Color</div>
@@ -1583,6 +1597,7 @@ document.getElementById('btn-nuevo-ejercicio').addEventListener('click', () => {
   entrenoFormAbierto = true;
   entrenoColorSel = ENTRENO_COLORES[0];
   entrenoIconoSel = 'dumbbell';
+  entrenoTipoMedidaSel = 'reps';
   renderDiaEntreno();
 });
 
@@ -1601,6 +1616,16 @@ document.getElementById('view-entrenamiento').addEventListener('click', async (e
     entrenoIconoSel = iconPick.dataset.icono;
     return;
   }
+  const tipoBtn = e.target.closest('[data-tipo]');
+  if (tipoBtn) {
+    tipoBtn.parentElement.querySelectorAll('.seg-btn').forEach(b => b.classList.remove('active'));
+    tipoBtn.classList.add('active');
+    entrenoTipoMedidaSel = tipoBtn.dataset.tipo;
+    const panel = tipoBtn.closest('.ej-edit-panel, #entreno-form-nuevo');
+    const repsLabel = panel.querySelector('.ej-input-reps').closest('.field-row').querySelector('label');
+    repsLabel.textContent = entrenoTipoMedidaSel === 'tiempo' ? 'Minutos' : 'Repeticiones';
+    return;
+  }
 
   const btn = e.target.closest('[data-action]');
   if (!btn) return;
@@ -1613,7 +1638,7 @@ document.getElementById('view-entrenamiento').addEventListener('click', async (e
     entrenoEditandoId = entrenoEditandoId === id ? null : id;
     entrenoFormAbierto = false;
     const ej = entrenoData[f].ejercicios.find(x => x.id === id);
-    if (ej) { entrenoColorSel = ej.color; entrenoIconoSel = ej.icono; }
+    if (ej) { entrenoColorSel = ej.color; entrenoIconoSel = ej.icono; entrenoTipoMedidaSel = ej.tipoMedida || 'reps'; }
     renderDiaEntreno();
   } else if (action === 'toggle-hecho') {
     e.stopPropagation();
@@ -1636,12 +1661,12 @@ document.getElementById('view-entrenamiento').addEventListener('click', async (e
 
     if (id) {
       const ej = entrenoData[f].ejercicios.find(x => x.id === id);
-      Object.assign(ej, { titulo, series, reps, peso, nota, color: entrenoColorSel, icono: entrenoIconoSel });
+      Object.assign(ej, { titulo, series, reps, peso, nota, color: entrenoColorSel, icono: entrenoIconoSel, tipoMedida: entrenoTipoMedidaSel });
       entrenoEditandoId = null;
     } else {
       entrenoData[f].ejercicios.push({
         id: generarIdEjercicio(), titulo, series, reps, peso, nota,
-        color: entrenoColorSel, icono: entrenoIconoSel, hecho: false
+        color: entrenoColorSel, icono: entrenoIconoSel, tipoMedida: entrenoTipoMedidaSel, hecho: false
       });
       entrenoFormAbierto = false;
     }
@@ -1666,6 +1691,12 @@ document.getElementById('entreno-nota-dia').addEventListener('change', async (e)
   const f = entrenoDiaSel;
   if (!entrenoData[f]) entrenoData[f] = { notaDia: '', ejercicios: [] };
   entrenoData[f].notaDia = e.target.value.trim();
+  await guardarDiaEntreno(f);
+});
+document.getElementById('entreno-hora').addEventListener('change', async (e) => {
+  const f = entrenoDiaSel;
+  if (!entrenoData[f]) entrenoData[f] = { notaDia: '', ejercicios: [] };
+  entrenoData[f].horaEntreno = e.target.value;
   await guardarDiaEntreno(f);
 });
 
