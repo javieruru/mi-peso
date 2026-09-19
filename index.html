@@ -379,6 +379,12 @@
   .btn-outline{
     width:100%;background:transparent;border:1.5px dashed var(--accent);color:var(--accent);
     padding:13px;border-radius:var(--radius-sm);font-size:15px;font-weight:600;cursor:pointer;margin-top:4px;
+    overflow:hidden;
+    transition:opacity .25s ease, max-height .25s ease, margin .25s ease, padding .25s ease, border-width .25s ease;
+    max-height:60px;opacity:1;
+  }
+  .btn-outline.oculto{
+    max-height:0;opacity:0;padding-top:0;padding-bottom:0;margin-top:0;border-width:0;pointer-events:none;
   }
   .copy-panel{margin-top:12px;padding-top:12px;border-top:1px solid var(--border);}
   .copy-days-row{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0;}
@@ -1554,6 +1560,7 @@ function renderDiaEntreno(){
   }
 
   document.getElementById('entreno-form-nuevo').hidden = !entrenoFormAbierto;
+  document.getElementById('btn-nuevo-ejercicio').classList.toggle('oculto', entrenoFormAbierto || !!entrenoEditandoId);
   if (entrenoFormAbierto) {
     document.getElementById('entreno-form-nuevo').innerHTML = formularioEjercicioHTML(null);
   }
