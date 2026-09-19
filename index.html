@@ -1526,7 +1526,8 @@ function renderDiaEntreno(){
     lista.innerHTML = ejercicios.map(ej => {
       const editando = entrenoEditandoId === ej.id;
       const unidadReps = ej.tipoMedida === 'tiempo' ? ' min' : '';
-      const detalle = `${ej.series || 0}×${ej.reps || 0}${unidadReps}${ej.peso ? ' | ' + ej.peso + ' kg' : ''}`;
+      const numeroBase = (ej.series && ej.series > 0) ? `${ej.series}×${ej.reps || 0}` : `${ej.reps || 0}`;
+      const detalle = `${numeroBase}${unidadReps}${ej.peso ? ' | ' + ej.peso + ' kg' : ''}`;
       return `
       <div class="ej-row-wrap">
         <div class="ej-row" style="border-left-color:${ej.color}" data-action="toggle-edit" data-id="${ej.id}">
@@ -1714,8 +1715,9 @@ function renderCopyDaysRow(){
   const row = document.getElementById('copy-days-row');
   if (!row) return;
   row.innerHTML = '';
-  for (let i = 0; i < 7; i++) {
-    const d = addDays(entrenoSemanaInicio, i);
+  const base = new Date(entrenoDiaSel + 'T00:00:00');
+  for (let i = 1; i <= 7; i++) {
+    const d = addDays(base, i);
     const f = toDateStr(d);
     const chip = document.createElement('button');
     chip.className = 'copy-day-chip' + (copyDiasSel.includes(f) ? ' sel' : '');
@@ -1743,7 +1745,10 @@ document.getElementById('btn-confirmar-copiar').addEventListener('click', async 
   if (!origen || origen.ejercicios.length === 0) { alert('Este día no tiene ejercicios para copiar.'); return; }
 
   for (const f of copyDiasSel) {
-    if (!entrenoData[f]) entrenoData[f] = { notaDia: '', ejercicios: [] };
+    if (!entrenoData[f]) {
+      const snap = await getDoc(doc(db, 'pesos', currentUser.uid, 'entrenamientos', f));
+      entrenoData[f] = snap.exists() ? snap.data() : { notaDia: '', ejercicios: [] };
+    }
     const copia = origen.ejercicios.map(ej => ({ ...ej, id: generarIdEjercicio(), hecho: false }));
     if (copyModo === 'reemplazar') {
       entrenoData[f].ejercicios = copia;
