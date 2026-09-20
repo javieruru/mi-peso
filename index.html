@@ -312,6 +312,31 @@
     padding:10px;border-radius:var(--radius-sm);font-size:14px;font-weight:600;cursor:pointer;
   }
 
+  /* Avatar */
+  .avatar-circle{
+    width:38px;height:38px;border-radius:50%;flex-shrink:0;overflow:hidden;
+    border:none;padding:0;cursor:pointer;background:rgba(120,120,128,0.14);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .avatar-circle img{width:100%;height:100%;object-fit:cover;display:block;}
+  .avatar-circle svg{width:60%;height:60%;}
+  .avatar-generico{width:100%;height:100%;display:flex;align-items:center;justify-content:center;}
+
+  /* Ajustes: foto de perfil */
+  .foto-perfil-row{display:flex;align-items:center;gap:16px;margin-bottom:4px;}
+  .avatar-circle-grande{
+    width:76px;height:76px;border-radius:50%;overflow:hidden;flex-shrink:0;
+    background:rgba(120,120,128,0.14);display:flex;align-items:center;justify-content:center;
+  }
+  .avatar-circle-grande img{width:100%;height:100%;object-fit:cover;display:block;}
+  .avatar-circle-grande svg{width:60%;height:60%;}
+  .foto-perfil-acciones{display:flex;flex-direction:column;gap:8px;flex:1;}
+  .btn-foto-accion{
+    background:rgba(120,120,128,0.12);color:var(--text);border:none;
+    padding:9px 14px;border-radius:999px;font-size:13px;font-weight:600;cursor:pointer;text-align:center;
+  }
+  .btn-foto-accion.quitar{color:var(--danger);}
+
   /* Ajustes */
   .btn-logout{
     width:100%;margin-top:8px;background:transparent;color:var(--danger);
@@ -523,9 +548,15 @@
         <h1 id="header-title">Hoy</h1>
         <div class="sub" id="header-date"></div>
       </div>
-      <div id="header-action">
-        <button id="btn-abrir-reporte" hidden style="background:rgba(94,92,230,0.15);border:none;border-radius:10px;width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;">
-          <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:19px;height:19px;"><path d="M3 3v18h18"/><path d="M7 15l3-4 3 2 5-6"/></svg>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div id="header-action">
+          <button id="btn-abrir-reporte" hidden style="background:rgba(94,92,230,0.15);border:none;border-radius:10px;width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:19px;height:19px;"><path d="M3 3v18h18"/><path d="M7 15l3-4 3 2 5-6"/></svg>
+          </button>
+        </div>
+        <button id="btn-avatar-header" class="avatar-circle" aria-label="Ir a Ajustes">
+          <img id="avatar-header-img" src="" alt="" hidden>
+          <div id="avatar-header-generico"></div>
         </button>
       </div>
     </header>
@@ -758,6 +789,21 @@
         </div>
 
         <div class="card">
+          <h2>Foto de perfil</h2>
+          <div class="foto-perfil-row">
+            <div class="avatar-circle-grande" id="avatar-ajustes-preview">
+              <img id="avatar-ajustes-img" src="" alt="" hidden>
+              <div id="avatar-ajustes-generico"></div>
+            </div>
+            <div class="foto-perfil-acciones">
+              <button class="btn-foto-accion" id="btn-cambiar-foto">Cambiar foto</button>
+              <button class="btn-foto-accion quitar" id="btn-quitar-foto" hidden>Quitar foto</button>
+            </div>
+            <input type="file" id="input-foto-perfil" accept="image/*" hidden>
+          </div>
+        </div>
+
+        <div class="card">
           <h2>Datos personales</h2>
           <div class="field-row">
             <label>Nombre</label>
@@ -766,6 +812,14 @@
           <div class="field-row">
             <label>Altura (cm)</label>
             <input type="number" id="input-altura" inputmode="decimal" placeholder="170">
+          </div>
+          <div class="field-row">
+            <label>Sexo</label>
+          </div>
+          <div class="segmented compact" id="sexo-seg" style="margin-top:0;">
+            <button class="seg-btn" data-sexo="hombre">Hombre</button>
+            <button class="seg-btn" data-sexo="mujer">Mujer</button>
+            <button class="seg-btn" data-sexo="neutro">Neutro</button>
           </div>
         </div>
 
@@ -834,6 +888,8 @@ let registros = {};       // { "2026-09-18": { peso, cintura, nota, fecha } }
 let alturaCm = null;
 let nombrePerfil = '';
 let temaPref = 'system';
+let sexoPerfil = 'neutro';
+let fotoBase64Perfil = null;
 let metaConfig = null;    // { pesoInicial, fechaInicio, pesoObjetivo, fechaObjetivo }
 let chartEvolucion = null;
 let historialEditando = null;
@@ -1031,7 +1087,7 @@ function mostrarConfirm(mensaje, textoAceptar, textoCancelar){
   });
 }
 
-// ---------- Firestore: perfil (altura + nombre + tema) ----------
+// ---------- Firestore: perfil (altura + nombre + tema + sexo + foto) ----------
 async function cargarPerfil(){
   const ref = doc(db, 'pesos', currentUser.uid, 'config', 'perfil');
   const snap = await getDoc(ref);
@@ -1039,16 +1095,127 @@ async function cargarPerfil(){
     const d = snap.data();
     alturaCm = d.alturaCm || null;
     nombrePerfil = d.nombre || '';
+    sexoPerfil = d.sexo || 'neutro';
+    fotoBase64Perfil = d.fotoBase64 || null;
     aplicarTema(d.tema || 'system');
   } else {
     aplicarTema('system');
   }
   document.getElementById('input-altura').value = alturaCm || '';
   document.getElementById('input-nombre').value = nombrePerfil || '';
+  aplicarSexoUI(sexoPerfil);
+  renderAvatares();
 }
 async function guardarPerfilCampo(campo, valor){
   const ref = doc(db, 'pesos', currentUser.uid, 'config', 'perfil');
   await setDoc(ref, { [campo]: valor }, { merge: true });
+}
+
+// ---------- Avatar: ícono genérico según sexo ----------
+function svgAvatarGenerico(sexo){
+  const colores = {
+    hombre: { bg: 'rgba(10,132,255,0.16)', fg: '#0A84FF' },
+    mujer:  { bg: 'rgba(255,45,146,0.16)', fg: '#FF2D92' },
+    neutro: { bg: 'rgba(120,120,128,0.18)', fg: 'var(--text-2)' }
+  };
+  const c = colores[sexo] || colores.neutro;
+  return `<div class="avatar-generico" style="background:${c.bg}">
+    <svg viewBox="0 0 24 24" fill="none" stroke="${c.fg}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-7 8-7s8 3 8 7"/>
+    </svg>
+  </div>`;
+}
+
+function renderAvatares(){
+  const targets = [
+    { img: 'avatar-header-img', gen: 'avatar-header-generico' },
+    { img: 'avatar-ajustes-img', gen: 'avatar-ajustes-generico' }
+  ];
+  targets.forEach(t => {
+    const img = document.getElementById(t.img);
+    const gen = document.getElementById(t.gen);
+    if (fotoBase64Perfil) {
+      img.src = fotoBase64Perfil;
+      img.hidden = false;
+      gen.innerHTML = '';
+    } else {
+      img.hidden = true;
+      img.src = '';
+      gen.innerHTML = svgAvatarGenerico(sexoPerfil);
+    }
+  });
+  document.getElementById('btn-quitar-foto').hidden = !fotoBase64Perfil;
+}
+
+function aplicarSexoUI(sexo){
+  document.querySelectorAll('#sexo-seg .seg-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.sexo === sexo);
+  });
+}
+
+document.querySelectorAll('#sexo-seg .seg-btn').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    sexoPerfil = btn.dataset.sexo;
+    aplicarSexoUI(sexoPerfil);
+    renderAvatares();
+    await guardarPerfilCampo('sexo', sexoPerfil);
+  });
+});
+
+document.getElementById('btn-avatar-header').addEventListener('click', () => {
+  document.querySelector('.tab-btn[data-view="ajustes"]').click();
+});
+
+document.getElementById('btn-cambiar-foto').addEventListener('click', () => {
+  document.getElementById('input-foto-perfil').click();
+});
+
+document.getElementById('btn-quitar-foto').addEventListener('click', async () => {
+  if (!(await mostrarConfirm('¿Quitar tu foto de perfil?', 'Quitar', 'Cancelar'))) return;
+  fotoBase64Perfil = null;
+  renderAvatares();
+  await guardarPerfilCampo('fotoBase64', null);
+  mostrarToast('Foto eliminada.');
+});
+
+document.getElementById('input-foto-perfil').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  e.target.value = '';
+  if (!file) return;
+  if (!file.type.startsWith('image/')) { mostrarToast('Elegí un archivo de imagen.', 'error'); return; }
+  try {
+    const base64 = await comprimirImagenAvatar(file, 200);
+    fotoBase64Perfil = base64;
+    renderAvatares();
+    await guardarPerfilCampo('fotoBase64', base64);
+    mostrarToast('Foto actualizada ✓');
+  } catch (err) {
+    mostrarToast('No se pudo procesar la imagen.', 'error');
+  }
+});
+
+function comprimirImagenAvatar(file, tamano){
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('No se pudo leer el archivo'));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('No se pudo cargar la imagen'));
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = tamano;
+        canvas.height = tamano;
+        const ctx = canvas.getContext('2d');
+        const lado = Math.min(img.width, img.height);
+        const sx = (img.width - lado) / 2;
+        const sy = (img.height - lado) / 2;
+        ctx.drawImage(img, sx, sy, lado, lado, 0, 0, tamano, tamano);
+        resolve(canvas.toDataURL('image/jpeg', 0.75));
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
 }
 document.getElementById('input-altura').addEventListener('change', async (e) => {
   const val = parseFloat(e.target.value);
