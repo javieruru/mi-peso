@@ -324,6 +324,30 @@
     padding:10px;border-radius:var(--radius-sm);font-size:14px;font-weight:600;cursor:pointer;
   }
 
+  /* Acordeón (Historial en Hoy) */
+  .acordeon-header{
+    width:100%;display:flex;align-items:center;justify-content:space-between;
+    background:none;border:none;padding:20px;cursor:pointer;text-align:left;font-family:inherit;
+  }
+  .acordeon-chevron{width:18px;height:18px;stroke:var(--text-2);flex-shrink:0;transition:transform .25s ease;}
+  .acordeon-chevron.abierto{transform:rotate(90deg);}
+  .acordeon-body{max-height:0;overflow:hidden;transition:max-height .3s ease;}
+  .acordeon-body-inner{padding:0 20px 20px;}
+
+  /* Alimentación */
+  .alim-lista-card{
+    background:var(--surface);border-radius:var(--radius);padding:16px 18px;
+    box-shadow:var(--shadow);margin-bottom:12px;cursor:pointer;
+  }
+  .alim-lista-card .nom{font-size:16px;font-weight:700;}
+  .alim-lista-card .sub2{font-size:13px;color:var(--text-2);margin-top:2px;}
+  .alim-cat-badge{
+    display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:600;
+    background:rgba(120,120,128,0.12);color:var(--text-2);
+  }
+  .alim-marca-row{display:flex;gap:8px;align-items:center;}
+  .alim-marca-row select{flex:1;}
+
   /* Avatar */
   .avatar-circle{
     width:38px;height:38px;border-radius:50%;flex-shrink:0;overflow:hidden;
@@ -624,9 +648,17 @@
           <div class="hint" id="hint-guardado" hidden>Guardado ✓</div>
         </div>
 
-        <div class="card">
-          <h2>Últimos registros</h2>
-          <div id="historial-lista"></div>
+        <div class="card" style="padding:0;overflow:hidden;">
+          <button class="acordeon-header" id="btn-acordeon-historial">
+            <h2 style="margin:0;">Historial</h2>
+            <svg class="acordeon-chevron" id="acordeon-historial-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+          </button>
+          <div class="acordeon-body" id="acordeon-historial-body">
+            <div class="acordeon-body-inner">
+              <div id="historial-lista"></div>
+              <button class="btn-outline" id="btn-ver-todo-historial" style="margin-top:10px;">Ver todo / Editar</button>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -672,12 +704,110 @@
         </div>
       </section>
 
-      <!-- HISTORIAL -->
+      <!-- HISTORIAL (sub-pantalla, se abre desde el acordeón de Hoy) -->
       <section class="view" id="view-historial">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+          <button id="btn-cerrar-historial" style="background:none;border:none;color:var(--accent);padding:4px;cursor:pointer;flex-shrink:0;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:24px;height:24px;"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+          <div style="flex:1;">
+            <div style="font-size:22px;font-weight:700;letter-spacing:-0.01em;">Historial</div>
+            <div class="sub" style="font-size:13px;color:var(--text-2);">Editá o eliminá cualquier registro</div>
+          </div>
+        </div>
         <div class="card">
-          <h2>Todos los registros</h2>
           <div id="historial-completo-lista"></div>
         </div>
+      </section>
+
+      <!-- ALIMENTACIÓN -->
+      <section class="view" id="view-alimentacion">
+
+        <div id="alim-listas-view">
+          <div class="segmented" id="alim-seg-main">
+            <button class="seg-btn active" data-seg="listas">Mis listas</button>
+            <button class="seg-btn" data-seg="historial">Historial</button>
+          </div>
+
+          <div class="subview active" id="alim-sub-listas">
+            <div class="card">
+              <button class="btn-outline" id="btn-nueva-lista" style="border-style:solid;">+ Nueva lista</button>
+              <div id="alim-form-nueva-lista" hidden style="margin-top:14px;">
+                <div class="field-row"><label>Nombre</label><input type="text" id="alim-input-nombre-lista" placeholder="Ej: Compra semanal"></div>
+                <div class="hint" style="text-align:left;margin:10px 0 6px;">Modo</div>
+                <div class="segmented compact" id="alim-modo-seg-nueva">
+                  <button class="seg-btn active" data-modo="sencillo">Sencillo</button>
+                  <button class="seg-btn" data-modo="detallado">Detallado</button>
+                </div>
+                <div class="hist-edit-actions">
+                  <button class="btn-save small" id="btn-crear-lista">Crear</button>
+                  <button class="btn-danger-outline" id="btn-cancelar-nueva-lista">Cancelar</button>
+                </div>
+              </div>
+            </div>
+            <div id="alim-listas-activas"></div>
+          </div>
+
+          <div class="subview" id="alim-sub-historial">
+            <div id="alim-listas-historial"></div>
+          </div>
+        </div>
+
+        <!-- Detalle de una lista activa -->
+        <div id="alim-detalle-view" hidden>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+            <button id="btn-cerrar-alim-detalle" style="background:none;border:none;color:var(--accent);padding:4px;cursor:pointer;flex-shrink:0;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:24px;height:24px;"><path d="M15 18l-6-6 6-6"/></svg>
+            </button>
+            <div style="flex:1;min-width:0;">
+              <div id="alim-detalle-titulo" style="font-size:20px;font-weight:700;letter-spacing:-0.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Lista</div>
+              <div class="sub" id="alim-detalle-sub" style="font-size:13px;color:var(--text-2);"></div>
+            </div>
+          </div>
+
+          <div class="card" id="alim-detalle-resumen"></div>
+
+          <div class="card" id="alim-detalle-agregar-card">
+            <h2>Agregar producto</h2>
+            <div id="alim-form-producto"></div>
+          </div>
+
+          <div class="card">
+            <h2>Productos</h2>
+            <div id="alim-productos-lista"></div>
+          </div>
+
+          <div class="card" id="alim-finalizar-card">
+            <button class="btn-save" id="btn-finalizar-compra">Finalizar compra</button>
+          </div>
+
+          <div class="card" id="alim-post-finalizar" hidden>
+            <div class="hint" style="margin-bottom:10px;">Lista finalizada ✓ ¿Qué querés hacer ahora?</div>
+            <div class="hist-edit-actions">
+              <button class="btn-save small" id="btn-nueva-lista-vacia">Nueva lista vacía</button>
+              <button class="btn-save small" id="btn-duplicar-lista" style="background:rgba(94,92,230,0.15);color:var(--accent);">Duplicar esta lista</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Detalle de una lista finalizada (solo lectura) -->
+        <div id="alim-historial-detalle-view" hidden>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+            <button id="btn-cerrar-alim-historial-detalle" style="background:none;border:none;color:var(--accent);padding:4px;cursor:pointer;flex-shrink:0;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:24px;height:24px;"><path d="M15 18l-6-6 6-6"/></svg>
+            </button>
+            <div style="flex:1;min-width:0;">
+              <div id="alim-historial-detalle-titulo" style="font-size:20px;font-weight:700;letter-spacing:-0.01em;">Lista</div>
+              <div class="sub" id="alim-historial-detalle-sub" style="font-size:13px;color:var(--text-2);"></div>
+            </div>
+          </div>
+          <div class="card" id="alim-historial-detalle-resumen"></div>
+          <div class="card">
+            <h2>Productos</h2>
+            <div id="alim-historial-detalle-productos"></div>
+          </div>
+        </div>
+
       </section>
 
       <!-- META -->
@@ -861,9 +991,9 @@
         <svg viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg>
         <span>Progreso</span>
       </button>
-      <button class="tab-btn" data-view="historial">
-        <svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13"/><path d="M3 6h.01M3 12h.01M3 18h.01"/></svg>
-        <span>Historial</span>
+      <button class="tab-btn" data-view="alimentacion">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+        <span>Alimentación</span>
       </button>
       <button class="tab-btn" data-view="meta">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg>
@@ -1129,6 +1259,7 @@ async function cargarPerfil(){
     nombrePerfil = d.nombre || '';
     sexoPerfil = d.sexo || 'neutro';
     fotoBase64Perfil = d.fotoBase64 || null;
+    marcasGuardadas = d.marcas || [];
     aplicarTema(d.tema || 'system');
   } else {
     aplicarTema('system');
@@ -1540,7 +1671,43 @@ function renderHistorialPreview(){
       ${r.nota ? `<div class="nota">${r.nota}</div>` : ''}
     </div>`;
   }).join('');
+  if (acordeonHistorialAbierto) {
+    const body = document.getElementById('acordeon-historial-body');
+    body.style.maxHeight = body.scrollHeight + 'px';
+  }
 }
+
+// ---------- Acordeón de Historial (Hoy) ----------
+let acordeonHistorialAbierto = false;
+document.getElementById('btn-acordeon-historial').addEventListener('click', () => {
+  acordeonHistorialAbierto = !acordeonHistorialAbierto;
+  const body = document.getElementById('acordeon-historial-body');
+  const chevron = document.getElementById('acordeon-historial-chevron');
+  chevron.classList.toggle('abierto', acordeonHistorialAbierto);
+  if (acordeonHistorialAbierto) {
+    body.style.maxHeight = body.scrollHeight + 'px';
+  } else {
+    body.style.maxHeight = '0';
+  }
+});
+
+function abrirHistorialCompleto(){
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-historial').classList.add('active');
+  document.querySelector('header.topbar').hidden = true;
+  renderHistorialCompleto();
+}
+function cerrarHistorialCompleto(){
+  document.getElementById('view-historial').classList.remove('active');
+  document.querySelector('header.topbar').hidden = false;
+  document.querySelector('.tab-btn[data-view="hoy"]').classList.add('active');
+  document.getElementById('view-hoy').classList.add('active');
+  document.getElementById('header-title').textContent = 'Hoy';
+  document.getElementById('header-date').style.display = '';
+}
+document.getElementById('btn-ver-todo-historial').addEventListener('click', abrirHistorialCompleto);
+document.getElementById('btn-cerrar-historial').addEventListener('click', cerrarHistorialCompleto);
 
 // ---------- Render: Evolución (rango dinámico) ----------
 function tituloRango(rango){
@@ -2402,6 +2569,481 @@ document.getElementById('btn-compartir-reporte').addEventListener('click', async
   } catch (e) {}
 });
 
+// ---------- Alimentación ----------
+const ALIM_CATEGORIAS = ['Almacén','Verduras','Frutas','Lácteos','Carnes','Limpieza','Bebidas','Otros'];
+const ALIM_UNIDADES = [{v:'u',l:'unidad'},{v:'g',l:'g'},{v:'kg',l:'kg'},{v:'l',l:'L'}];
+const ALIM_CAT_COLOR = {
+  'Almacén':'#FF9F0A','Verduras':'#30B355','Frutas':'#FFD60A','Lácteos':'#0A84FF',
+  'Carnes':'#FF3B30','Limpieza':'#5E5CE6','Bebidas':'#FF2D92','Otros':'#8E8E93'
+};
+
+let listasCompra = {};
+let alimListaAbiertaId = null;
+let alimHistorialAbiertoId = null;
+let alimProductoEditandoId = null;
+let alimFormNuevaAbierto = false;
+let marcasGuardadas = [];
+
+async function cargarListasCompra(){
+  const ref = collection(db, 'pesos', currentUser.uid, 'listasCompra');
+  const snap = await getDocs(ref);
+  listasCompra = {};
+  snap.forEach(d => { listasCompra[d.id] = d.data(); });
+}
+async function guardarLista(id){
+  const ref = doc(db, 'pesos', currentUser.uid, 'listasCompra', id);
+  await setDoc(ref, listasCompra[id]);
+}
+async function eliminarListaFirestore(id){
+  const ref = doc(db, 'pesos', currentUser.uid, 'listasCompra', id);
+  await deleteDoc(ref);
+}
+
+async function cargarYRenderizarAlimentacion(){
+  document.getElementById('alim-listas-view').hidden = false;
+  document.getElementById('alim-detalle-view').hidden = true;
+  document.getElementById('alim-historial-detalle-view').hidden = true;
+  await cargarListasCompra();
+  renderAlimListasActivas();
+  renderAlimListasHistorial();
+}
+
+function progresoLista(lista){
+  const total = lista.productos.length;
+  const comprados = lista.productos.filter(p => p.comprado).length;
+  return { total, comprados, pct: total > 0 ? Math.round((comprados/total)*100) : 0 };
+}
+
+function renderAlimListasActivas(){
+  const cont = document.getElementById('alim-listas-activas');
+  const ids = Object.keys(listasCompra).filter(id => listasCompra[id].estado === 'activa');
+  if (ids.length === 0) {
+    cont.innerHTML = `<div class="empty-state">Todavía no creaste ninguna lista.</div>`;
+    return;
+  }
+  ids.sort((a,b) => (listasCompra[b].creada || '').localeCompare(listasCompra[a].creada || ''));
+  cont.innerHTML = ids.map(id => {
+    const l = listasCompra[id];
+    const { total, comprados, pct } = progresoLista(l);
+    return `
+    <div class="alim-lista-card" data-id="${id}">
+      <div class="nom">${l.nombre}</div>
+      <div class="sub2">${comprados} de ${total} comprados · ${l.modo === 'detallado' ? 'Detallado' : 'Sencillo'}</div>
+      <div class="progress-bar-track" style="margin-top:10px;"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
+    </div>`;
+  }).join('');
+}
+
+function renderAlimListasHistorial(){
+  const cont = document.getElementById('alim-listas-historial');
+  const ids = Object.keys(listasCompra).filter(id => listasCompra[id].estado === 'finalizada');
+  if (ids.length === 0) {
+    cont.innerHTML = `<div class="empty-state">Todavía no finalizaste ninguna compra.</div>`;
+    return;
+  }
+  ids.sort((a,b) => (listasCompra[b].finalizada || '').localeCompare(listasCompra[a].finalizada || ''));
+  cont.innerHTML = ids.map(id => {
+    const l = listasCompra[id];
+    const total = l.productos.length;
+    let totalGasto = null;
+    if (l.modo === 'detallado') {
+      totalGasto = l.productos.filter(p => p.comprado).reduce((acc,p) => acc + ((p.precioUnitario||0) * (p.cantidadReal ?? p.cantidad)), 0);
+    }
+    return `
+    <div class="alim-lista-card" data-id="${id}">
+      <div class="nom">${l.nombre}</div>
+      <div class="sub2">${formatFechaCorta(l.finalizada)} · ${total} productos${totalGasto!=null ? ` · $${totalGasto.toFixed(2)}` : ''}</div>
+    </div>`;
+  }).join('');
+}
+
+document.getElementById('alim-listas-activas').addEventListener('click', (e) => {
+  const card = e.target.closest('.alim-lista-card');
+  if (card) abrirDetalleLista(card.dataset.id);
+});
+document.getElementById('alim-listas-historial').addEventListener('click', (e) => {
+  const card = e.target.closest('.alim-lista-card');
+  if (card) abrirHistorialDetalle(card.dataset.id);
+});
+
+document.querySelectorAll('#alim-seg-main .seg-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#alim-seg-main .seg-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('#view-alimentacion > #alim-listas-view .subview').forEach(v => v.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('alim-sub-' + btn.dataset.seg).classList.add('active');
+  });
+});
+
+document.getElementById('btn-nueva-lista').addEventListener('click', () => {
+  alimFormNuevaAbierto = !alimFormNuevaAbierto;
+  document.getElementById('alim-form-nueva-lista').hidden = !alimFormNuevaAbierto;
+  if (alimFormNuevaAbierto) document.getElementById('alim-input-nombre-lista').value = '';
+});
+document.getElementById('btn-cancelar-nueva-lista').addEventListener('click', () => {
+  alimFormNuevaAbierto = false;
+  document.getElementById('alim-form-nueva-lista').hidden = true;
+});
+let alimModoNueva = 'sencillo';
+document.querySelectorAll('#alim-modo-seg-nueva .seg-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#alim-modo-seg-nueva .seg-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    alimModoNueva = btn.dataset.modo;
+  });
+});
+document.getElementById('btn-crear-lista').addEventListener('click', async () => {
+  const nombre = document.getElementById('alim-input-nombre-lista').value.trim();
+  if (!nombre) { mostrarToast('Ponele un nombre a la lista.', 'error'); return; }
+  const id = generarIdEjercicio();
+  listasCompra[id] = {
+    nombre, modo: alimModoNueva, estado: 'activa',
+    creada: toDateStr(new Date()), finalizada: null, productos: []
+  };
+  await guardarLista(id);
+  alimFormNuevaAbierto = false;
+  document.getElementById('alim-form-nueva-lista').hidden = true;
+  renderAlimListasActivas();
+  abrirDetalleLista(id);
+});
+
+// ---------- Detalle de lista activa ----------
+function abrirDetalleLista(id){
+  alimListaAbiertaId = id;
+  alimProductoEditandoId = null;
+  document.getElementById('alim-listas-view').hidden = true;
+  document.getElementById('alim-detalle-view').hidden = false;
+  renderAlimDetalle();
+}
+document.getElementById('btn-cerrar-alim-detalle').addEventListener('click', () => {
+  document.getElementById('alim-detalle-view').hidden = true;
+  document.getElementById('alim-listas-view').hidden = false;
+  renderAlimListasActivas();
+});
+
+function htmlSelectUnidad(valorActual){
+  return `<select class="alim-input-unidad">` + ALIM_UNIDADES.map(u =>
+    `<option value="${u.v}" ${u.v === valorActual ? 'selected' : ''}>${u.l}</option>`
+  ).join('') + `</select>`;
+}
+function htmlSelectCategoria(valorActual){
+  return `<select class="alim-input-categoria">` + ALIM_CATEGORIAS.map(c =>
+    `<option value="${c}" ${c === valorActual ? 'selected' : ''}>${c}</option>`
+  ).join('') + `</select>`;
+}
+function htmlSelectMarca(valorActual){
+  const val = valorActual || 'Genérico';
+  let opts = `<option value="Genérico" ${val==='Genérico'?'selected':''}>Genérico</option>`;
+  marcasGuardadas.forEach(m => { opts += `<option value="${m}" ${m===val?'selected':''}>${m}</option>`; });
+  opts += `<option value="__nueva__">+ Crear marca nueva</option>`;
+  return `<select class="alim-input-marca">${opts}</select>`;
+}
+
+function renderAlimDetalle(){
+  const l = listasCompra[alimListaAbiertaId];
+  if (!l) return;
+  document.getElementById('alim-detalle-titulo').textContent = l.nombre;
+  document.getElementById('alim-detalle-sub').textContent =
+    `${l.modo === 'detallado' ? 'Detallado' : 'Sencillo'} · Creada el ${formatFechaCorta(l.creada)}`;
+
+  const { total, comprados, pct } = progresoLista(l);
+  let totalGasto = null;
+  if (l.modo === 'detallado') {
+    totalGasto = l.productos.filter(p => p.comprado).reduce((acc,p) => acc + ((p.precioUnitario||0) * (p.cantidadReal ?? p.cantidad)), 0);
+  }
+  document.getElementById('alim-detalle-resumen').innerHTML = `
+    <div class="dash-grid" style="margin:0;">
+      <div class="dash-box"><div class="v">${total - comprados}</div><div class="l">Pendientes</div></div>
+      <div class="dash-box"><div class="v">${comprados}</div><div class="l">Comprados</div></div>
+      <div class="dash-box"><div class="v">${pct}%</div><div class="l">Completado</div></div>
+    </div>
+    <div class="progress-bar-track"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
+    ${totalGasto != null ? `<div class="hint" style="margin-top:2px;">Gastado hasta ahora: $${totalGasto.toFixed(2)}</div>` : ''}
+  `;
+
+  const finalizada = l.estado === 'finalizada';
+  document.getElementById('alim-detalle-agregar-card').hidden = finalizada;
+  document.getElementById('alim-finalizar-card').hidden = finalizada;
+  document.getElementById('alim-post-finalizar').hidden = !finalizada;
+
+  if (!finalizada) {
+    document.getElementById('alim-form-producto').innerHTML = `
+      <div class="field-row"><label>Producto</label><input type="text" class="alim-nuevo-nombre" placeholder="Ej: Leche"></div>
+      <div class="field-row"><label>Cantidad</label>
+        <div style="display:flex;gap:8px;">
+          <input type="number" class="alim-nuevo-cantidad" step="0.1" style="width:70px;" placeholder="1">
+          ${htmlSelectUnidad('u')}
+        </div>
+      </div>
+      <div class="field-row"><label>Categoría</label>${htmlSelectCategoria(ALIM_CATEGORIAS[0])}</div>
+      ${l.modo === 'detallado' ? `
+        <div class="field-row"><label>Marca</label><div class="alim-marca-row">${htmlSelectMarca('Genérico')}</div></div>
+        <div id="alim-nueva-marca-row" hidden style="display:flex;gap:8px;margin:8px 0;">
+          <input type="text" class="alim-nueva-marca-input" placeholder="Nombre de la marca" style="flex:1;">
+          <button class="btn-save small" data-action="confirmar-marca-nueva">Agregar</button>
+        </div>
+        <div class="field-row"><label>Precio (por unidad/kg/L)</label><input type="number" class="alim-nuevo-precio" step="0.01" placeholder="0.00"></div>
+      ` : ''}
+      <button class="btn-save" data-action="agregar-producto" style="margin-top:10px;">+ Agregar a la lista</button>
+    `;
+  }
+
+  renderAlimProductosLista();
+}
+
+function formularioEdicionProductoHTML(p, modo){
+  return `
+    <div class="field-row"><label>Producto</label><input type="text" class="alim-edit-nombre" value="${p.nombre}"></div>
+    <div class="field-row"><label>Cantidad</label>
+      <div style="display:flex;gap:8px;">
+        <input type="number" class="alim-edit-cantidad" step="0.1" style="width:70px;" value="${p.cantidad}">
+        ${htmlSelectUnidad(p.unidad).replace('class="alim-input-unidad"', 'class="alim-edit-unidad"')}
+      </div>
+    </div>
+    <div class="field-row"><label>Categoría</label>${htmlSelectCategoria(p.categoria).replace('class="alim-input-categoria"', 'class="alim-edit-categoria"')}</div>
+    ${modo === 'detallado' ? `
+      <div class="field-row"><label>Marca</label><div class="alim-marca-row">${htmlSelectMarca(p.marca).replace('class="alim-input-marca"', 'class="alim-edit-marca"')}</div></div>
+      <div id="alim-nueva-marca-row-edit" hidden style="display:flex;gap:8px;margin:8px 0;">
+        <input type="text" class="alim-nueva-marca-input" placeholder="Nombre de la marca" style="flex:1;">
+        <button class="btn-save small" data-action="confirmar-marca-nueva-edit">Agregar</button>
+      </div>
+      <div class="field-row"><label>Precio</label><input type="number" class="alim-edit-precio" step="0.01" value="${p.precioUnitario ?? ''}"></div>
+      <div class="field-row"><label>Cantidad real comprada</label><input type="number" class="alim-edit-cantidad-real" step="0.1" value="${p.cantidadReal ?? p.cantidad}"></div>
+    ` : ''}
+    <div class="hist-edit-actions">
+      <button class="btn-save small" data-action="guardar-producto" data-id="${p.id}">Guardar</button>
+      <button class="btn-danger-outline" data-action="eliminar-producto" data-id="${p.id}">Eliminar</button>
+    </div>
+  `;
+}
+
+function renderAlimProductosLista(){
+  const l = listasCompra[alimListaAbiertaId];
+  const cont = document.getElementById('alim-productos-lista');
+  if (!l || l.productos.length === 0) {
+    cont.innerHTML = `<div class="empty-state">Todavía no agregaste productos.</div>`;
+    return;
+  }
+  const ordenados = [...l.productos].sort((a,b) => (a.comprado === b.comprado) ? 0 : (a.comprado ? 1 : -1));
+  cont.innerHTML = ordenados.map(p => {
+    const editando = alimProductoEditandoId === p.id;
+    const color = ALIM_CAT_COLOR[p.categoria] || ALIM_CAT_COLOR['Otros'];
+    const unidadLabel = (ALIM_UNIDADES.find(u => u.v === p.unidad) || {}).l || p.unidad;
+    const partes = [`${p.cantidad} ${unidadLabel}`, p.categoria];
+    if (l.modo === 'detallado') {
+      if (p.marca && p.marca !== 'Genérico') partes.push(p.marca);
+      if (p.precioUnitario) partes.push(`$${p.precioUnitario}`);
+    }
+    return `
+      <div class="ej-row-wrap">
+        <div class="ej-row" style="border-left-color:${color};${p.comprado ? 'opacity:.55;' : ''}" data-action="toggle-edit-producto" data-id="${p.id}">
+          <div class="ej-icon-circle" style="background:${color}22;">
+            <span style="color:${color};font-weight:700;font-size:13px;">${p.categoria.charAt(0)}</span>
+          </div>
+          <div class="ej-info">
+            <div class="t" style="${p.comprado ? 'text-decoration:line-through;' : ''}">${p.nombre}</div>
+            <div class="d">${partes.join(' · ')}</div>
+          </div>
+          <div class="ej-check ${p.comprado ? 'hecho' : ''}" data-action="toggle-comprado" data-id="${p.id}">
+            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+          </div>
+        </div>
+        ${editando ? `<div class="ej-edit-panel">${formularioEdicionProductoHTML(p, l.modo)}</div>` : ''}
+      </div>`;
+  }).join('');
+}
+
+document.getElementById('view-alimentacion').addEventListener('change', (e) => {
+  if (e.target.classList.contains('alim-input-marca')) {
+    document.getElementById('alim-nueva-marca-row').hidden = e.target.value !== '__nueva__';
+  }
+  if (e.target.classList.contains('alim-edit-marca')) {
+    document.getElementById('alim-nueva-marca-row-edit').hidden = e.target.value !== '__nueva__';
+  }
+});
+
+document.getElementById('view-alimentacion').addEventListener('click', async (e) => {
+  const btn = e.target.closest('[data-action]');
+  if (!btn) return;
+  const action = btn.dataset.action;
+  const l = listasCompra[alimListaAbiertaId];
+
+  if (action === 'agregar-producto') {
+    const form = document.getElementById('alim-form-producto');
+    const nombre = form.querySelector('.alim-nuevo-nombre').value.trim();
+    if (!nombre) { mostrarToast('Ponele un nombre al producto.', 'error'); return; }
+    const cantidad = parseFloat(form.querySelector('.alim-nuevo-cantidad').value) || 1;
+    const unidad = form.querySelector('.alim-input-unidad').value;
+    const categoria = form.querySelector('.alim-input-categoria').value;
+    const nuevo = { id: generarIdEjercicio(), nombre, cantidad, unidad, categoria, comprado: false, marca: null, precioUnitario: null, cantidadReal: null };
+    if (l.modo === 'detallado') {
+      const marcaSel = form.querySelector('.alim-input-marca').value;
+      nuevo.marca = marcaSel === '__nueva__' ? 'Genérico' : marcaSel;
+      nuevo.precioUnitario = parseFloat(form.querySelector('.alim-nuevo-precio').value) || null;
+    }
+    l.productos.push(nuevo);
+    await guardarLista(alimListaAbiertaId);
+    renderAlimDetalle();
+    mostrarToast('Producto agregado ✓');
+
+  } else if (action === 'confirmar-marca-nueva') {
+    const input = document.querySelector('#alim-nueva-marca-row .alim-nueva-marca-input');
+    const nombre = input.value.trim();
+    if (!nombre) return;
+    if (!marcasGuardadas.includes(nombre)) {
+      marcasGuardadas.push(nombre);
+      await guardarPerfilCampo('marcas', marcasGuardadas);
+    }
+    const select = document.querySelector('#alim-form-producto .alim-input-marca');
+    select.innerHTML = htmlSelectMarca(nombre).match(/<option.*<\/option>/s)[0];
+    document.getElementById('alim-nueva-marca-row').hidden = true;
+
+  } else if (action === 'confirmar-marca-nueva-edit') {
+    const input = document.querySelector('#alim-nueva-marca-row-edit .alim-nueva-marca-input');
+    const nombre = input.value.trim();
+    if (!nombre) return;
+    if (!marcasGuardadas.includes(nombre)) {
+      marcasGuardadas.push(nombre);
+      await guardarPerfilCampo('marcas', marcasGuardadas);
+    }
+    const select = document.querySelector('.ej-edit-panel .alim-edit-marca');
+    select.innerHTML = htmlSelectMarca(nombre).match(/<option.*<\/option>/s)[0];
+    document.getElementById('alim-nueva-marca-row-edit').hidden = true;
+
+  } else if (action === 'toggle-comprado') {
+    const p = l.productos.find(x => x.id === btn.dataset.id);
+    if (p) {
+      p.comprado = !p.comprado;
+      if (p.comprado && l.modo === 'detallado' && p.cantidadReal == null) p.cantidadReal = p.cantidad;
+      await guardarLista(alimListaAbiertaId);
+      renderAlimDetalle();
+    }
+
+  } else if (action === 'toggle-edit-producto') {
+    alimProductoEditandoId = alimProductoEditandoId === btn.dataset.id ? null : btn.dataset.id;
+    renderAlimProductosLista();
+
+  } else if (action === 'guardar-producto') {
+    const panel = btn.closest('.ej-edit-panel');
+    const p = l.productos.find(x => x.id === btn.dataset.id);
+    p.nombre = panel.querySelector('.alim-edit-nombre').value.trim() || p.nombre;
+    p.cantidad = parseFloat(panel.querySelector('.alim-edit-cantidad').value) || p.cantidad;
+    p.unidad = panel.querySelector('.alim-edit-unidad').value;
+    p.categoria = panel.querySelector('.alim-edit-categoria').value;
+    if (l.modo === 'detallado') {
+      const marcaSel = panel.querySelector('.alim-edit-marca').value;
+      if (marcaSel !== '__nueva__') p.marca = marcaSel;
+      p.precioUnitario = parseFloat(panel.querySelector('.alim-edit-precio').value) || null;
+      p.cantidadReal = parseFloat(panel.querySelector('.alim-edit-cantidad-real').value) || p.cantidad;
+    }
+    alimProductoEditandoId = null;
+    await guardarLista(alimListaAbiertaId);
+    renderAlimDetalle();
+
+  } else if (action === 'eliminar-producto') {
+    if (await mostrarConfirm('¿Eliminar este producto?', 'Eliminar', 'Cancelar')) {
+      l.productos = l.productos.filter(x => x.id !== btn.dataset.id);
+      alimProductoEditandoId = null;
+      await guardarLista(alimListaAbiertaId);
+      renderAlimDetalle();
+    }
+  }
+});
+
+document.getElementById('btn-finalizar-compra').addEventListener('click', async () => {
+  const l = listasCompra[alimListaAbiertaId];
+  if (l.productos.length === 0) { mostrarToast('Agregá al menos un producto antes de finalizar.', 'error'); return; }
+  if (!(await mostrarConfirm('¿Finalizar esta compra? Pasará al historial.', 'Finalizar', 'Cancelar'))) return;
+  l.estado = 'finalizada';
+  l.finalizada = toDateStr(new Date());
+  await guardarLista(alimListaAbiertaId);
+  renderAlimDetalle();
+  mostrarToast('Compra finalizada ✓');
+});
+
+document.getElementById('btn-nueva-lista-vacia').addEventListener('click', () => {
+  document.getElementById('alim-detalle-view').hidden = true;
+  document.getElementById('alim-listas-view').hidden = false;
+  renderAlimListasActivas();
+  renderAlimListasHistorial();
+  alimFormNuevaAbierto = true;
+  document.getElementById('alim-form-nueva-lista').hidden = false;
+  document.getElementById('alim-input-nombre-lista').value = '';
+});
+
+document.getElementById('btn-duplicar-lista').addEventListener('click', async () => {
+  const original = listasCompra[alimListaAbiertaId];
+  const id = generarIdEjercicio();
+  listasCompra[id] = {
+    nombre: original.nombre, modo: original.modo, estado: 'activa',
+    creada: toDateStr(new Date()), finalizada: null,
+    productos: original.productos.map(p => ({ ...p, id: generarIdEjercicio(), comprado: false, cantidadReal: null }))
+  };
+  await guardarLista(id);
+  mostrarToast('Lista duplicada ✓');
+  abrirDetalleLista(id);
+});
+
+// ---------- Detalle de lista finalizada (historial, solo lectura) ----------
+function abrirHistorialDetalle(id){
+  alimHistorialAbiertoId = id;
+  document.getElementById('alim-listas-view').hidden = true;
+  document.getElementById('alim-historial-detalle-view').hidden = false;
+  renderAlimHistorialDetalle();
+}
+document.getElementById('btn-cerrar-alim-historial-detalle').addEventListener('click', () => {
+  document.getElementById('alim-historial-detalle-view').hidden = true;
+  document.getElementById('alim-listas-view').hidden = false;
+  renderAlimListasHistorial();
+});
+
+function renderAlimHistorialDetalle(){
+  const l = listasCompra[alimHistorialAbiertoId];
+  if (!l) return;
+  document.getElementById('alim-historial-detalle-titulo').textContent = l.nombre;
+  document.getElementById('alim-historial-detalle-sub').textContent =
+    `Finalizada el ${formatFechaCorta(l.finalizada)} · ${l.modo === 'detallado' ? 'Detallado' : 'Sencillo'}`;
+
+  let totalGasto = null;
+  if (l.modo === 'detallado') {
+    totalGasto = l.productos.filter(p => p.comprado).reduce((acc,p) => acc + ((p.precioUnitario||0) * (p.cantidadReal ?? p.cantidad)), 0);
+  }
+  document.getElementById('alim-historial-detalle-resumen').innerHTML = `
+    <div class="stat-grid" style="grid-template-columns:1fr 1fr;">
+      <div class="stat-box"><div class="v">${l.productos.length}</div><div class="l">Productos</div></div>
+      <div class="stat-box"><div class="v">${l.productos.filter(p=>p.comprado).length}</div><div class="l">Comprados</div></div>
+    </div>
+    ${totalGasto != null ? `<div class="hint">Total gastado: $${totalGasto.toFixed(2)}</div>` : ''}
+  `;
+
+  const cont = document.getElementById('alim-historial-detalle-productos');
+  if (l.productos.length === 0) {
+    cont.innerHTML = `<div class="empty-state">Esta lista no tiene productos.</div>`;
+    return;
+  }
+  cont.innerHTML = l.productos.map(p => {
+    const color = ALIM_CAT_COLOR[p.categoria] || ALIM_CAT_COLOR['Otros'];
+    const unidadLabel = (ALIM_UNIDADES.find(u => u.v === p.unidad) || {}).l || p.unidad;
+    const partes = [`${p.cantidadReal ?? p.cantidad} ${unidadLabel}`, p.categoria];
+    if (l.modo === 'detallado') {
+      if (p.marca && p.marca !== 'Genérico') partes.push(p.marca);
+      if (p.precioUnitario) partes.push(`$${p.precioUnitario}`);
+    }
+    return `
+      <div class="ej-row-wrap">
+        <div class="ej-row" style="border-left-color:${color};${!p.comprado ? 'opacity:.5;' : ''}">
+          <div class="ej-icon-circle" style="background:${color}22;">
+            <span style="color:${color};font-weight:700;font-size:13px;">${p.categoria.charAt(0)}</span>
+          </div>
+          <div class="ej-info">
+            <div class="t" style="${p.comprado ? '' : 'text-decoration:line-through;'}">${p.nombre}</div>
+            <div class="d">${partes.join(' · ')}${p.comprado ? '' : ' · No comprado'}</div>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
 // ---------- Tabs principales ----------
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -2410,7 +3052,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.classList.add('active');
     const view = btn.dataset.view;
     document.getElementById('view-' + view).classList.add('active');
-    const titles = { hoy: 'Hoy', progreso: 'Progreso', historial: 'Historial', meta: 'Meta', entrenamiento: 'Entrenamiento', ajustes: 'Ajustes' };
+    const titles = { hoy: 'Hoy', progreso: 'Progreso', alimentacion: 'Alimentación', meta: 'Meta', entrenamiento: 'Entrenamiento', ajustes: 'Ajustes' };
     document.getElementById('header-title').textContent = titles[view];
     document.getElementById('header-date').style.display = view === 'hoy' ? '' : 'none';
     document.querySelector('header.topbar').hidden = false;
@@ -2418,6 +3060,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     document.getElementById('entreno-normal-view').hidden = false;
     document.getElementById('btn-abrir-reporte').hidden = view !== 'entrenamiento';
     if (view === 'entrenamiento') cargarYRenderizarSemanaEntreno();
+    if (view === 'alimentacion') cargarYRenderizarAlimentacion();
   });
 });
 
