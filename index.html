@@ -13,6 +13,17 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="icon" href="icon-192.png">
 <title>Mi Peso</title>
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+<script>
+  window.OneSignalDeferred = window.OneSignalDeferred || [];
+  OneSignalDeferred.push(async function(OneSignal) {
+    await OneSignal.init({
+      appId: "478a3520-7170-4f75-89a8-7c3c159fa12e",
+      serviceWorkerPath: "push/onesignal/OneSignalSDKWorker.js",
+      serviceWorkerParam: { scope: "/mi-peso/push/onesignal/" },
+    });
+  });
+</script>
 <style>
   :root{
     --bg:#F2F2F7;
@@ -825,6 +836,16 @@
         </div>
 
         <div class="card">
+          <h2>Notificaciones</h2>
+          <div class="field-row">
+            <label>Notificaciones push</label>
+            <span id="notif-estado" style="font-size:14px;color:var(--text-2);font-weight:600;">Desactivadas</span>
+          </div>
+          <button class="btn-save" id="btn-activar-notif" style="margin-top:10px;">Activar notificaciones</button>
+          <div class="hint" id="notif-hint" hidden></div>
+        </div>
+
+        <div class="card">
           <button class="btn-logout" id="btn-logout">Cerrar sesión</button>
         </div>
       </section>
@@ -973,6 +994,11 @@ document.getElementById('btn-login').addEventListener('click', () => {
 });
 
 document.getElementById('btn-logout').addEventListener('click', () => {
+  if (window.OneSignalDeferred) {
+    window.OneSignalDeferred.push(async function(OneSignal) {
+      try { await OneSignal.logout(); } catch (e) {}
+    });
+  }
   signOut(auth);
 });
 
@@ -994,6 +1020,11 @@ document.getElementById('btn-logout').addEventListener('click', () => {
 onAuthStateChanged(auth, async (user) => {
   if (user) {
     currentUser = user;
+    if (window.OneSignalDeferred) {
+      window.OneSignalDeferred.push(async function(OneSignal) {
+        try { await OneSignal.login(user.uid); } catch (e) {}
+      });
+    }
     document.getElementById('auth-screen').hidden = true;
     document.getElementById('loading-screen').hidden = false;
     document.getElementById('perfil-foto').src = user.photoURL || '';
@@ -1218,6 +1249,69 @@ function comprimirImagenAvatar(file, tamano){
     reader.readAsDataURL(file);
   });
 }
+
+// ---------- Notificaciones push (OneSignal) ----------
+function actualizarEstadoNotificaciones(activadas){
+  const estado = document.getElementById('notif-estado');
+  const btn = document.getElementById('btn-activar-notif');
+  if (activadas) {
+    estado.textContent = 'Activadas';
+    estado.style.color = 'var(--ok)';
+    btn.textContent = 'Notificaciones activadas ✓';
+    btn.disabled = true;
+  } else {
+    estado.textContent = 'Desactivadas';
+    estado.style.color = 'var(--text-2)';
+    btn.textContent = 'Activar notificaciones';
+    btn.disabled = false;
+  }
+}
+
+if (window.OneSignalDeferred) {
+  window.OneSignalDeferred.push(async function(OneSignal) {
+    try {
+      actualizarEstadoNotificaciones(OneSignal.User.PushSubscription.optedIn);
+      OneSignal.User.PushSubscription.addEventListener('change', (e) => {
+        actualizarEstadoNotificaciones(!!(e && e.current && e.current.optedIn));
+      });
+    } catch (e) {}
+  });
+}
+
+document.getElementById('btn-activar-notif').addEventListener('click', async () => {
+  const hint = document.getElementById('notif-hint');
+  hint.hidden = true;
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+    hint.hidden = false;
+    hint.textContent = 'Tu navegador no soporta notificaciones push.';
+    return;
+  }
+  if (!window.OneSignalDeferred) {
+    mostrarToast('OneSignal todavía no cargó, probá de nuevo en unos segundos.', 'error');
+    return;
+  }
+  window.OneSignalDeferred.push(async function(OneSignal) {
+    try {
+      const soportado = OneSignal.Notifications.isPushSupported();
+      if (!soportado) {
+        hint.hidden = false;
+        hint.textContent = 'Este navegador o dispositivo no soporta notificaciones push. En iPhone, agregá la app a tu pantalla de inicio primero.';
+        return;
+      }
+      const permitido = await OneSignal.Notifications.requestPermission();
+      if (permitido) {
+        mostrarToast('Notificaciones activadas ✓');
+        actualizarEstadoNotificaciones(true);
+      } else {
+        hint.hidden = false;
+        hint.textContent = 'No se otorgó el permiso. Podés habilitarlo desde la configuración del navegador.';
+      }
+    } catch (err) {
+      mostrarToast('No se pudo activar: ' + err.message, 'error');
+    }
+  });
+});
+
 document.getElementById('input-altura').addEventListener('change', async (e) => {
   const val = parseFloat(e.target.value);
   if (!val || val <= 0) return;
