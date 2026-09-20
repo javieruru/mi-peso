@@ -763,6 +763,9 @@
               <div id="alim-detalle-titulo" style="font-size:20px;font-weight:700;letter-spacing:-0.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Lista</div>
               <div class="sub" id="alim-detalle-sub" style="font-size:13px;color:var(--text-2);"></div>
             </div>
+            <button id="btn-eliminar-lista" style="background:rgba(255,59,48,0.12);border:none;border-radius:10px;width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+            </button>
           </div>
 
           <div class="card" id="alim-detalle-resumen"></div>
@@ -800,6 +803,9 @@
               <div id="alim-historial-detalle-titulo" style="font-size:20px;font-weight:700;letter-spacing:-0.01em;">Lista</div>
               <div class="sub" id="alim-historial-detalle-sub" style="font-size:13px;color:var(--text-2);"></div>
             </div>
+            <button id="btn-eliminar-lista-historial" style="background:rgba(255,59,48,0.12);border:none;border-radius:10px;width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+            </button>
           </div>
           <div class="card" id="alim-historial-detalle-resumen"></div>
           <div class="card">
@@ -2577,6 +2583,17 @@ const ALIM_CAT_COLOR = {
   'Carnes':'#FF3B30','Limpieza':'#5E5CE6','Bebidas':'#FF2D92','Otros':'#8E8E93'
 };
 
+// El precio unitario siempre se carga por unidad/kg/L (nunca por gramo), así que
+// los gramos se convierten a kg antes de multiplicar por el precio.
+function cantidadEnBasePrecio(cantidad, unidad){
+  return unidad === 'g' ? cantidad / 1000 : cantidad;
+}
+function calcularSubtotalProducto(p){
+  if (p.precioPagado != null) return p.precioPagado;
+  if (p.precioUnitario) return p.precioUnitario * cantidadEnBasePrecio(p.cantidadReal ?? p.cantidad, p.unidad);
+  return 0;
+}
+
 let listasCompra = {};
 let alimListaAbiertaId = null;
 let alimHistorialAbiertoId = null;
@@ -2647,7 +2664,7 @@ function renderAlimListasHistorial(){
     const total = l.productos.length;
     let totalGasto = null;
     if (l.modo === 'detallado') {
-      totalGasto = l.productos.filter(p => p.comprado).reduce((acc,p) => acc + ((p.precioUnitario||0) * (p.cantidadReal ?? p.cantidad)), 0);
+      totalGasto = l.productos.filter(p => p.comprado).reduce((acc,p) => acc + calcularSubtotalProducto(p), 0);
     }
     return `
     <div class="alim-lista-card" data-id="${id}">
@@ -2720,6 +2737,17 @@ document.getElementById('btn-cerrar-alim-detalle').addEventListener('click', () 
   document.getElementById('alim-listas-view').hidden = false;
   renderAlimListasActivas();
 });
+document.getElementById('btn-eliminar-lista').addEventListener('click', async () => {
+  const l = listasCompra[alimListaAbiertaId];
+  if (await mostrarConfirm(`¿Eliminar la lista "${l.nombre}" completa? No se puede deshacer.`, 'Eliminar', 'Cancelar')) {
+    await eliminarListaFirestore(alimListaAbiertaId);
+    delete listasCompra[alimListaAbiertaId];
+    document.getElementById('alim-detalle-view').hidden = true;
+    document.getElementById('alim-listas-view').hidden = false;
+    renderAlimListasActivas();
+    mostrarToast('Lista eliminada.');
+  }
+});
 
 function htmlSelectUnidad(valorActual){
   return `<select class="alim-input-unidad">` + ALIM_UNIDADES.map(u =>
@@ -2749,7 +2777,7 @@ function renderAlimDetalle(){
   const { total, comprados, pct } = progresoLista(l);
   let totalGasto = null;
   if (l.modo === 'detallado') {
-    totalGasto = l.productos.filter(p => p.comprado).reduce((acc,p) => acc + ((p.precioUnitario||0) * (p.cantidadReal ?? p.cantidad)), 0);
+    totalGasto = l.productos.filter(p => p.comprado).reduce((acc,p) => acc + calcularSubtotalProducto(p), 0);
   }
   document.getElementById('alim-detalle-resumen').innerHTML = `
     <div class="dash-grid" style="margin:0;">
@@ -2807,8 +2835,9 @@ function formularioEdicionProductoHTML(p, modo){
         <input type="text" class="alim-nueva-marca-input" placeholder="Nombre de la marca" style="flex:1;">
         <button class="btn-save small" data-action="confirmar-marca-nueva-edit">Agregar</button>
       </div>
-      <div class="field-row"><label>Precio</label><input type="number" class="alim-edit-precio" step="0.01" value="${p.precioUnitario ?? ''}"></div>
+      <div class="field-row"><label>Precio estimado (por unidad/kg/L)</label><input type="number" class="alim-edit-precio" step="0.01" value="${p.precioUnitario ?? ''}"></div>
       <div class="field-row"><label>Cantidad real comprada</label><input type="number" class="alim-edit-cantidad-real" step="0.1" value="${p.cantidadReal ?? p.cantidad}"></div>
+      <div class="field-row"><label>Precio real pagado</label><input type="number" class="alim-edit-precio-pagado" step="0.01" value="${p.precioPagado ?? (p.precioUnitario ? calcularSubtotalProducto(p).toFixed(2) : '')}"></div>
     ` : ''}
     <div class="hist-edit-actions">
       <button class="btn-save small" data-action="guardar-producto" data-id="${p.id}">Guardar</button>
@@ -2832,7 +2861,7 @@ function renderAlimProductosLista(){
     const partes = [`${p.cantidad} ${unidadLabel}`, p.categoria];
     if (l.modo === 'detallado') {
       if (p.marca && p.marca !== 'Genérico') partes.push(p.marca);
-      if (p.precioUnitario) partes.push(`$${p.precioUnitario}`);
+      if (p.comprado && (p.precioPagado != null || p.precioUnitario)) partes.push(`$${calcularSubtotalProducto(p).toFixed(2)} pagado`); else if (p.precioUnitario) partes.push(`~$${p.precioUnitario}/u`);
     }
     return `
       <div class="ej-row-wrap">
@@ -2875,7 +2904,7 @@ document.getElementById('view-alimentacion').addEventListener('click', async (e)
     const cantidad = parseFloat(form.querySelector('.alim-nuevo-cantidad').value) || 1;
     const unidad = form.querySelector('.alim-input-unidad').value;
     const categoria = form.querySelector('.alim-input-categoria').value;
-    const nuevo = { id: generarIdEjercicio(), nombre, cantidad, unidad, categoria, comprado: false, marca: null, precioUnitario: null, cantidadReal: null };
+    const nuevo = { id: generarIdEjercicio(), nombre, cantidad, unidad, categoria, comprado: false, marca: null, precioUnitario: null, cantidadReal: null, precioPagado: null };
     if (l.modo === 'detallado') {
       const marcaSel = form.querySelector('.alim-input-marca').value;
       nuevo.marca = marcaSel === '__nueva__' ? 'Genérico' : marcaSel;
@@ -2914,7 +2943,10 @@ document.getElementById('view-alimentacion').addEventListener('click', async (e)
     const p = l.productos.find(x => x.id === btn.dataset.id);
     if (p) {
       p.comprado = !p.comprado;
-      if (p.comprado && l.modo === 'detallado' && p.cantidadReal == null) p.cantidadReal = p.cantidad;
+      if (p.comprado && l.modo === 'detallado') {
+        if (p.cantidadReal == null) p.cantidadReal = p.cantidad;
+        if (p.precioPagado == null && p.precioUnitario) p.precioPagado = Math.round(calcularSubtotalProducto(p) * 100) / 100;
+      }
       await guardarLista(alimListaAbiertaId);
       renderAlimDetalle();
     }
@@ -2935,6 +2967,8 @@ document.getElementById('view-alimentacion').addEventListener('click', async (e)
       if (marcaSel !== '__nueva__') p.marca = marcaSel;
       p.precioUnitario = parseFloat(panel.querySelector('.alim-edit-precio').value) || null;
       p.cantidadReal = parseFloat(panel.querySelector('.alim-edit-cantidad-real').value) || p.cantidad;
+      const precioPagadoRaw = panel.querySelector('.alim-edit-precio-pagado').value;
+      p.precioPagado = precioPagadoRaw !== '' ? parseFloat(precioPagadoRaw) : null;
     }
     alimProductoEditandoId = null;
     await guardarLista(alimListaAbiertaId);
@@ -2996,6 +3030,17 @@ document.getElementById('btn-cerrar-alim-historial-detalle').addEventListener('c
   document.getElementById('alim-listas-view').hidden = false;
   renderAlimListasHistorial();
 });
+document.getElementById('btn-eliminar-lista-historial').addEventListener('click', async () => {
+  const l = listasCompra[alimHistorialAbiertoId];
+  if (await mostrarConfirm(`¿Eliminar del historial la lista "${l.nombre}"? No se puede deshacer.`, 'Eliminar', 'Cancelar')) {
+    await eliminarListaFirestore(alimHistorialAbiertoId);
+    delete listasCompra[alimHistorialAbiertoId];
+    document.getElementById('alim-historial-detalle-view').hidden = true;
+    document.getElementById('alim-listas-view').hidden = false;
+    renderAlimListasHistorial();
+    mostrarToast('Lista eliminada del historial.');
+  }
+});
 
 function renderAlimHistorialDetalle(){
   const l = listasCompra[alimHistorialAbiertoId];
@@ -3006,7 +3051,7 @@ function renderAlimHistorialDetalle(){
 
   let totalGasto = null;
   if (l.modo === 'detallado') {
-    totalGasto = l.productos.filter(p => p.comprado).reduce((acc,p) => acc + ((p.precioUnitario||0) * (p.cantidadReal ?? p.cantidad)), 0);
+    totalGasto = l.productos.filter(p => p.comprado).reduce((acc,p) => acc + calcularSubtotalProducto(p), 0);
   }
   document.getElementById('alim-historial-detalle-resumen').innerHTML = `
     <div class="stat-grid" style="grid-template-columns:1fr 1fr;">
@@ -3027,7 +3072,7 @@ function renderAlimHistorialDetalle(){
     const partes = [`${p.cantidadReal ?? p.cantidad} ${unidadLabel}`, p.categoria];
     if (l.modo === 'detallado') {
       if (p.marca && p.marca !== 'Genérico') partes.push(p.marca);
-      if (p.precioUnitario) partes.push(`$${p.precioUnitario}`);
+      if (p.comprado && (p.precioPagado != null || p.precioUnitario)) partes.push(`$${calcularSubtotalProducto(p).toFixed(2)} pagado`); else if (p.precioUnitario) partes.push(`~$${p.precioUnitario}/u`);
     }
     return `
       <div class="ej-row-wrap">
