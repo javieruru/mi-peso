@@ -900,7 +900,6 @@
 
           <div id="entreno-ejercicios-lista"></div>
           <div class="ej-grid" id="entreno-ejercicios-grid" hidden></div>
-          <div class="ej-edit-panel" id="entreno-edit-panel-tarjetas" hidden style="border-top:none;padding-left:0;padding-right:0;"></div>
 
           <button class="btn-outline" id="btn-nuevo-ejercicio">+ Agregar ejercicio</button>
 
@@ -2272,7 +2271,6 @@ function renderDiaEntreno(){
         if (ejActual && cont) cont.innerHTML = formularioEjercicioHTML(ejActual);
       }
     }
-    document.getElementById('entreno-edit-panel-tarjetas').hidden = true;
   } else {
     if (ejercicios.length === 0) {
       gridCont.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">Día libre 😌</div>`;
@@ -2282,7 +2280,7 @@ function renderDiaEntreno(){
         const fotoHTML = ej.foto
           ? `<img class="ej-card-foto" src="${ej.foto}" alt="">`
           : `<div class="ej-card-generico" style="background:${ej.color}22;"><svg viewBox="0 0 24 24" stroke="${ej.color}" fill="none" stroke-linecap="round" stroke-linejoin="round">${ENTRENO_ICONOS[ej.icono] || ENTRENO_ICONOS.dumbbell}</svg></div>`;
-        return `
+        const tarjeta = `
         <div class="ej-card" style="border-top-color:${ej.color};" data-action="toggle-edit" data-id="${ej.id}">
           ${fotoHTML}
           <div class="ej-card-check ${ej.hecho ? 'hecho' : ''}" data-action="toggle-hecho" data-id="${ej.id}">
@@ -2293,19 +2291,16 @@ function renderDiaEntreno(){
             ${detalle ? `<div class="d">${detalle}</div>` : ''}
           </div>
         </div>`;
+        const panelInline = (entrenoEditandoId === ej.id)
+          ? `<div class="ej-edit-panel" id="ej-form-tarjeta-${ej.id}" style="grid-column:1/-1;border-top:none;"></div>`
+          : '';
+        return tarjeta + panelInline;
       }).join('');
-    }
-    const panelTarjetas = document.getElementById('entreno-edit-panel-tarjetas');
-    if (entrenoEditandoId) {
-      const ejActual = ejercicios.find(e => e.id === entrenoEditandoId);
-      if (ejActual) {
-        panelTarjetas.hidden = false;
-        panelTarjetas.innerHTML = formularioEjercicioHTML(ejActual);
-      } else {
-        panelTarjetas.hidden = true;
+      if (entrenoEditandoId) {
+        const ejActual = ejercicios.find(e => e.id === entrenoEditandoId);
+        const cont = document.getElementById('ej-form-tarjeta-' + entrenoEditandoId);
+        if (ejActual && cont) cont.innerHTML = formularioEjercicioHTML(ejActual);
       }
-    } else {
-      panelTarjetas.hidden = true;
     }
   }
 
@@ -2407,10 +2402,18 @@ document.getElementById('view-entrenamiento').addEventListener('click', async (e
 
   if (action === 'toggle-edit') {
     entrenoEditandoId = entrenoEditandoId === id ? null : id;
+    const seAbrio = entrenoEditandoId !== null;
     entrenoFormAbierto = false;
     const ej = entrenoData[f].ejercicios.find(x => x.id === id);
     if (ej) { entrenoColorSel = ej.color; entrenoIconoSel = ej.icono; entrenoTipoMedidaSel = ej.tipoMedida || 'reps'; entrenoFotoTemp = ej.foto || null; }
     renderDiaEntreno();
+    if (seAbrio) {
+      requestAnimationFrame(() => {
+        const panelId = entrenoVista === 'tarjetas' ? 'ej-form-tarjeta-' + entrenoEditandoId : 'ej-form-' + entrenoEditandoId;
+        const panel = document.getElementById(panelId);
+        if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    }
   } else if (action === 'toggle-hecho') {
     e.stopPropagation();
     const ej = entrenoData[f].ejercicios.find(x => x.id === id);
