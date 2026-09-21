@@ -752,6 +752,11 @@
       <!-- ALIMENTACIÓN -->
       <section class="view" id="view-alimentacion">
 
+        <div class="card" id="meta-nutricional-card">
+          <h2>Meta nutricional diaria</h2>
+          <div id="meta-nutricional-body"></div>
+        </div>
+
         <div id="alim-listas-view">
           <div class="segmented" id="alim-seg-main">
             <button class="seg-btn active" data-seg="listas">Mis listas</button>
@@ -1010,6 +1015,18 @@
             <button class="seg-btn" data-sexo="mujer">Mujer</button>
             <button class="seg-btn" data-sexo="neutro">Neutro</button>
           </div>
+          <div class="field-row" style="margin-top:6px;">
+            <label>Edad</label>
+            <input type="number" id="input-edad" inputmode="numeric" placeholder="30">
+          </div>
+          <div class="field-row">
+            <label>Nivel de actividad</label>
+          </div>
+          <div class="segmented compact" id="actividad-seg" style="margin-top:0;">
+            <button class="seg-btn" data-actividad="sedentario">Sedentario</button>
+            <button class="seg-btn" data-actividad="moderado">Moderado</button>
+            <button class="seg-btn" data-actividad="intenso">Intenso</button>
+          </div>
         </div>
 
         <div class="card">
@@ -1091,6 +1108,8 @@ let nombrePerfil = '';
 let temaPref = 'system';
 let sexoPerfil = 'neutro';
 let fotoBase64Perfil = null;
+let edadPerfil = null;
+let actividadPerfil = 'moderado';
 let metaConfig = null;    // { pesoInicial, fechaInicio, pesoObjetivo, fechaObjetivo }
 let chartEvolucion = null;
 let historialEditando = null;
@@ -1309,13 +1328,18 @@ async function cargarPerfil(){
     sexoPerfil = d.sexo || 'neutro';
     fotoBase64Perfil = d.fotoBase64 || null;
     marcasGuardadas = d.marcas || [];
+    edadPerfil = d.edad || null;
+    actividadPerfil = d.actividad || 'moderado';
+    multiplicadorProteina = d.multiplicadorProteina || 2;
     aplicarTema(d.tema || 'system');
   } else {
     aplicarTema('system');
   }
   document.getElementById('input-altura').value = alturaCm || '';
   document.getElementById('input-nombre').value = nombrePerfil || '';
+  document.getElementById('input-edad').value = edadPerfil || '';
   aplicarSexoUI(sexoPerfil);
+  aplicarActividadUI(actividadPerfil);
   renderAvatares();
 }
 async function guardarPerfilCampo(campo, valor){
@@ -1372,6 +1396,26 @@ document.querySelectorAll('#sexo-seg .seg-btn').forEach(btn => {
     renderAvatares();
     await guardarPerfilCampo('sexo', sexoPerfil);
   });
+});
+
+function aplicarActividadUI(actividad){
+  document.querySelectorAll('#actividad-seg .seg-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.actividad === actividad);
+  });
+}
+document.querySelectorAll('#actividad-seg .seg-btn').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    actividadPerfil = btn.dataset.actividad;
+    aplicarActividadUI(actividadPerfil);
+    await guardarPerfilCampo('actividad', actividadPerfil);
+    if (typeof renderMetaNutricional === 'function') renderMetaNutricional();
+  });
+});
+document.getElementById('input-edad').addEventListener('change', async (e) => {
+  const val = parseInt(e.target.value);
+  edadPerfil = (val && val > 0) ? val : null;
+  await guardarPerfilCampo('edad', edadPerfil);
+  if (typeof renderMetaNutricional === 'function') renderMetaNutricional();
 });
 
 document.getElementById('btn-avatar-header').addEventListener('click', () => {
@@ -1498,6 +1542,7 @@ document.getElementById('input-altura').addEventListener('change', async (e) => 
   alturaCm = val;
   await guardarPerfilCampo('alturaCm', val);
   renderDashboard();
+  if (typeof renderMetaNutricional === 'function') renderMetaNutricional();
 });
 document.getElementById('input-nombre').addEventListener('change', async (e) => {
   const val = e.target.value.trim();
@@ -2773,6 +2818,46 @@ let alimHistorialAbiertoId = null;
 let alimProductoEditandoId = null;
 let alimFormNuevaAbierto = false;
 let marcasGuardadas = [];
+let multiplicadorProteina = 2;
+const ALIM_ACTIVIDAD_FACTOR = { sedentario: 1.2, moderado: 1.55, intenso: 1.725 };
+
+function calcularBMR(peso, alturaCmVal, edad, sexo){
+  if (sexo === 'hombre') return 10*peso + 6.25*alturaCmVal - 5*edad + 5;
+  if (sexo === 'mujer') return 10*peso + 6.25*alturaCmVal - 5*edad - 161;
+  return 10*peso + 6.25*alturaCmVal - 5*edad - 78;
+}
+
+function renderMetaNutricional(){
+  const body = document.getElementById('meta-nutricional-body');
+  const ultimo = ultimoRegistro();
+  if (!ultimo || !alturaCm || !edadPerfil) {
+    body.innerHTML = `<div class="empty-state">Completá tu peso, altura y edad (en Ajustes) para calcular tu meta.</div>`;
+    return;
+  }
+  const bmr = calcularBMR(ultimo.peso, alturaCm, edadPerfil, sexoPerfil);
+  const tdee = bmr * (ALIM_ACTIVIDAD_FACTOR[actividadPerfil] || 1.55);
+  let calorias = tdee;
+  let ajusteTexto = 'mantenimiento';
+  if (metaConfig) {
+    if (metaConfig.pesoObjetivo < metaConfig.pesoInicial) { calorias = tdee - 500; ajusteTexto = 'déficit para bajar de peso'; }
+    else if (metaConfig.pesoObjetivo > metaConfig.pesoInicial) { calorias = tdee + 300; ajusteTexto = 'superávit para subir de peso'; }
+  }
+  const proteina = ultimo.peso * multiplicadorProteina;
+  body.innerHTML = `
+    <div class="dash-grid" style="margin:0 0 10px;">
+      <div class="dash-box"><div class="v">${Math.round(calorias)}</div><div class="l">Calorías/día</div></div>
+      <div class="dash-box"><div class="v">${Math.round(proteina)} g</div><div class="l">Proteína/día</div></div>
+    </div>
+    <div class="hint" style="margin-bottom:10px;">Calculado en ${ajusteTexto}, según tu peso actual (${fmtKg(ultimo.peso)} kg), altura, edad y actividad.</div>
+    <div class="field-row"><label>Proteína (g por kg de peso)</label><input type="number" step="0.1" id="input-multiplicador-proteina" value="${multiplicadorProteina}" style="width:70px;"></div>
+  `;
+  document.getElementById('input-multiplicador-proteina').addEventListener('change', async (e) => {
+    const val = parseFloat(e.target.value);
+    multiplicadorProteina = (val && val > 0) ? val : 2;
+    await guardarPerfilCampo('multiplicadorProteina', multiplicadorProteina);
+    renderMetaNutricional();
+  });
+}
 
 async function cargarListasCompra(){
   const ref = collection(db, 'pesos', currentUser.uid, 'listasCompra');
@@ -2793,6 +2878,7 @@ async function cargarYRenderizarAlimentacion(){
   document.getElementById('alim-listas-view').hidden = false;
   document.getElementById('alim-detalle-view').hidden = true;
   document.getElementById('alim-historial-detalle-view').hidden = true;
+  renderMetaNutricional();
   await cargarListasCompra();
   renderAlimListasActivas();
   renderAlimListasHistorial();
